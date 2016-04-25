@@ -1,0 +1,7 @@
+
+module load openmpi-1.7.5
+make clean; make
+
+cd src/C
+
+run OpenSpeedShop from that directory

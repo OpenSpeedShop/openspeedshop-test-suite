@@ -1,0 +1,5 @@
+ossio "mpirun -np 2 ./IOR"
+ossiot "mpirun -np 2 ./IOR"
+ossiop "mpirun -np 2 ./IOR"
+
+

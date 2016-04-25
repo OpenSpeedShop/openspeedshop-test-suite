@@ -1,0 +1,30 @@
+#!/bin/csh
+#
+# LSF batch script to run an MPI application
+#
+#BSUB -P P43310039           # project code
+#BSUB -W 00:30               # wall-clock time (hrs:mins)
+#BSUB -n 64                  # number of tasks in job         
+#BSUB -R "span[ptile=4]"    # run 4 MPI tasks per node
+#BSUB -J sweep3d-hwc               # job name
+#BSUB -o sweep3d-hwc.%J.out        # output file name in which %J is replaced by the job ID
+#BSUB -e sweep3d-hwc.%J.err        # error file name in which %J is replaced by the job ID
+#BSUB -q regular             # queue
+
+module load opensspapi_u8
+module list
+
+mkdir -p /glade/scratch/${USER}/sweep3d
+rm -rf /glade/scratch/${USER}/sweep3d/hwc
+mkdir /glade/scratch/${USER}/sweep3d/hwc
+setenv OPENSS_RAWDATA_DIR /glade/scratch/${USER}/sweep3d/hwc
+
+setenv REQUEST_SUSPEND_HPC_STAT 1
+
+echo "running (on compute node): osshwc"
+#/glade/u/home/galaro/oss_offline/bin/osshwc "mpirun.lsf /glade/u/home/galaro/demos/sweep3d/sweep3d.mpi" 
+#/glade/u/home/galaro/oss_offline/bin/osshwc "mpirun.lsf /glade/u/home/galaro/demos/sweep3d/sweep3d.mpi" PAPI_LI_DCM
+
+#/glade/u/home/galaro/oss_offline/bin/osshwc "mpirun.lsf /glade/u/home/galaro/demos/sweep3d/modified/sweep3d.mpi" PAPI_LI_DCA
+/glade/u/home/galaro/oss_offline/bin/osshwc "mpirun.lsf /glade/u/home/galaro/demos/sweep3d/orig/sweep3d.mpi" PAPI_LI_DCA
+

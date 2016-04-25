@@ -1,0 +1,66 @@
+
+BUILD:
+gfortran -D__GFORTRAN -g -O -fopenmp -ostress_omp stress_omp.f -lm -lgomp
+
+RUN using the input file:
+stress_omp < stress.input
+
+RUN UNDER openss:
+module load openss202b9
+
+export OMP_NUM_THREADS=8
+export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=2
+
+osspcsamp "./stress_omp < stress.input"
+ossusertime "./stress_omp < stress.input"
+osshwc "./stress_omp < stress.input"
+osshwcsamp "./stress_omp < stress.input"
+osshwctime "./stress_omp < stress.input"
+ossio "./stress_omp < stress.input"
+ossiot "./stress_omp < stress.input"
+
+
+osscompare "stress_omp-pcsamp-10.openss,stress_omp-pcsamp-9.openss"
+
+ossanon stress_omp-pcsamp.openss stress_anon_pcsamp.openss
+
+openss -cli -f xxxx
+ cviewcluster
+ cview -c n
+ cview -c m
+ ..
+
+ cviewinfo -c n
+ cviewinfo -c m
+ ..
+
+unset OMP_NUM_THREADS
+
+
+
+
+ON YELLOWSTONE:
+
+module load krellroot_u8 opensspapi_u8
+
+#export OMP_NUM_THREADS=8
+#export OMP_NUM_THREADS=4
+#export OMP_NUM_THREADS=2
+
+setenv OMP_NUM_THREADS 8
+#setenv OMP_NUM_THREADS 4
+#setenv OMP_NUM_THREADS 2
+osspcsamp "./stress_omp < stress.input"
+
+
+# old notes:
+
+   335  14:57   setenv OMP_NUM_THREADS 8
+   341  15:03   osscompare "stress_omp-pcsamp.openss,stress_omp-pcsamp-1.openss"
+   344  15:04   osspcsamp "./stress_omp < stress.input"
+   347  15:11   mv stress_omp-pcsamp-1.openss omp8-stress_omp-pcsamp.openss
+   348  15:11   mv stress_omp-pcsamp-2.openss omp1-stress_omp-pcsamp.openss
+   349  15:12   osscompare "omp8-stress_omp-pcsamp.openss,omp1-stress_omp-pcsamp.openss"
+   351  15:13   gfortran -D__GFORTRAN -g -O -fopenmp -ostress_omp stress_omp.f -lm -lgomp
+

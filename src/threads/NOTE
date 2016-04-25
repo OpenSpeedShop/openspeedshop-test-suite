@@ -1,0 +1,15 @@
+#openss -f ./threads pcsamp
+#or
+osspcsamp ./threads
+ossusertime ./threads
+
+export OPENSS_HWCSAMP_EVENTS=PAPI_L1_DCM
+osshwcsamp ./threads
+or
+osshwcsamp ./threads PAPI_L1_DCM
+
+# HWC
+export OPENSS_HWC_EVENT=PAPI_L1_DCM
+osshwc ./threads
+
+
