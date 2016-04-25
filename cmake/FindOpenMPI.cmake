@@ -43,7 +43,7 @@ find_library(OpenMPI_CXX_LIBRARY_SHARED NAMES mpi_cxx
     PATH_SUFFIXES lib lib64
     )
 
-find_library(OpenMPI_MPIFH_LIBRARY_SHARED NAMES mpi_mpifh
+find_library(OpenMPI_MPIFH_LIBRARY_SHARED NAMES mpi_mpifh mpi_f90 mpi_f77
     HINTS $ENV{OPENMPI_DIR}
     HINTS ${OPENMPI_DIR}
     PATH_SUFFIXES lib lib64
