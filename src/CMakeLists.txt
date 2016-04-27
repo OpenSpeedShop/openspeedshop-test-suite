@@ -20,6 +20,8 @@ add_subdirectory(nbody)
 add_subdirectory(lulesh2.0.3)
 add_subdirectory(loopcheck)
 add_subdirectory(sweep3d)
+#add_subdirectory(stream)
+#add_subdirectory(mpi_wave)
 
 
 
