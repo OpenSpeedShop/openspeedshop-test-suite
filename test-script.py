@@ -6,6 +6,8 @@ import subprocess
 from subprocess import Popen, PIPE
 import argparse
 import sys
+import shutil
+from datetime import datetime
 
 """Open Speed Shop Test Script
 by Patrick Romero 4/11/16
@@ -20,12 +22,13 @@ def get_db_name(cmd):
 def test_obj(env, file_name):
     test = {}
     lst = file_name.split('-')
-    test['exe'] = file_name
+    test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
+    #test['exe'] = file_name
     test['name'] = lst[1]
     test['mpi_driver'] = lst[3] if len(lst) > 3 else ''
     test['compiler'] = lst[-1]
     #determine appropriate collectors, according to the old test-tool.sh
-    coll = ['hwc', 'hwtime', 'hwcsamp', 'pcsamp', 'usertime']
+    coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime']
     if test['mpi_driver'] != '':
         coll.extend(['mpi', 'mpit'])
     ##
@@ -33,6 +36,8 @@ def test_obj(env, file_name):
         coll.append('mem')
         if test['mpi_driver'] != '':
             coll.append('mpip')
+    test['collectors'] = coll
+    return test
            
 
         
@@ -44,13 +49,16 @@ def build_tests(env):
     compilers = env['compilers']
     log = []
     for cc in compilers:
-        buildcmd = 'run_buildd_' + cc +'.sh' #identify build script
+        cwd = os.getcwd()
+        buildcmd = 'run_build_' + cc +'.sh' #identify build script
+        buildcmd = os.path.join(cwd,buildcmd)
+        print buildcmd
         p = Popen(buildcmd)
         p.wait()
         if p.returncode != 0:
-            log.append 'build failed script ' + buildcmd ' failed'
+            log.append('build script ' + buildcmd + ' failed')
         else:
-            log.append 'build failed script ' + buildcmd ' succeeded'
+            log.append('build script ' + buildcmd + ' succeeded')
 
     print '\tSUMMARY:'
     for l in log:
@@ -61,12 +69,13 @@ def create_env(filename):
     """create the default environment file"""
     print "generated default environment file env.json"
     print "please edit this to have correct values"
-    env = {'bin_dir':'/opt/openmpi-1.10.2/bin',
-        'test_data_dir':'/opt/openmpi-1.10.2/test_data',
-        'build_scripts_dir':'/opt/openmpi-1.10.2/build_scripts',
-        'src_dir':'/opt/openmpi-1.10.2/src',
+    env = {'bin_dir':'bin',
+        'test_data_dir':'test_data',
+        'build_scripts_dir':'build_scripts',
+        'src_dir':'src',
         'dynamic_cbtf':False,
-        'job_controller':'raw' }
+        'job_controller':'raw',
+        'compilers':['gnu'] }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
     envfile.close()
@@ -85,35 +94,40 @@ def read_env(filename):
     envfile.close()
     return env
 
+def mk_cd(d):
+    if not os.path.isdir(d):
+        try: os.mkdir(d)
+        except:
+            print 'failed to create directory ' + os.path.join(os.getcwd(), d)
+            print 'do you have write permissions?'
+            return 1
+    os.chdir(d)
+
 def run_tests(env, tests, is_baseline):
     base_dir = os.getcwd()
-    if not os.path.isdir('test_data'):
-        try: os.mkdir('test_data')
-        except:
-            print 'failed to create directory test_data'
-            print 'do you have write permissions?'
-	    return 1
-	os.chdir('test_data')
-            if not os.path.isdir('test_data'):
-            try: os.mkdir('test_data')
-            except:
-                print 'failed to create directory test_data'
-                print 'do you have write permissions?'
-                return 1
+    mk_cd('test_data')
+    if is_baseline:
+        mk_cd('baseline')
+    else:
+        mk_cd('results')
+    folder = str(datetime.now())
+    folder = folder.split()[0] + '_' + folder.split()[1]
+    mk_cd(folder)
+
     job_cont = env['job_controller']
     if job_cont == 'raw':	
-        return raw_job_controller(env, tests, is_baseline)
+        return raw_job_controller(env, tests)
     elif job_cont == 'moab':
-        return raw_job_controller(env, tests, is_baseline)
+        return raw_job_controller(env, tests)
     elif job_cont == 'slurm':
-        return raw_job_controller(env, tests, is_baseline)
+        return raw_job_controller(env, tests)
     elif job_cont == 'pbs':
-        return raw_job_controller(env, tests, is_baseline)
+        return raw_job_controller(env, tests)
     else:
         print 'invalid job controller type ' + job_cont
     os.chdir(base_dir)
 		
-def moab_job_controller(env, tests, is_baseline):
+def moab_job_controller(env, tests):
     '''
         #PBS -l nodes=4:ppn=12
         #PBS -l walltime=1:00:00:00
@@ -136,11 +150,11 @@ def moab_job_controller(env, tests, is_baseline):
     pass #need to implement
 
 
-def slurm_job_controller(env, tests, is_baseline):
+def slurm_job_controller(env, tests):
 
     pass #need to implement
 
-def pbs_job_controller(env, tests, is_baseline):
+def pbs_job_controller(env, tests):
     '''
     # Example PBS cluster job submission in Python
      
@@ -184,40 +198,44 @@ def pbs_job_controller(env, tests, is_baseline):
     '''
     pass
 
-def raw_job_controller(env, tests, is_baseline):
+def raw_job_controller(env, tests):
     failed = []
     base_dir = os.getcwd()
-    os.chdir(env['test_data_dir']
     
-    #currently only supports one baseline file and one results file
-    #could be changed later
     for t in tests: #loop through all tests
+        if t['name'] == 'sweep3d': #need to move input file
+            input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
+            shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
+
         for c in t['collectors']: #loop through all collectors to run
             #run each collector on the test program
-            cmd = ['oss' + c, x]
+            cmd = ['oss' + c, t['exe']]
+            print base_dir
+            print cmd[0] + ' ' + cmd[1]
             p = Popen(cmd)
             p.wait() #wait for subprocess to finish
             db_name = get_db_name(cmd) #get the name of the output file
+        #OPTIONAL os.rm(input_file)
         if p.returncode != 0:
-            print 'failed to run test ' + c + ' ' + x
-            failed.append(c + ", " + x)
+            print 'failed to run test ' + c + ' ' + t['exe']
+            failed.append(c + ", " + t['exe'])
         try: os.rm(db_name)
         except: pass
                         
-	if len(failed) > 0:
-		print "failed to run tests:"
-		for f in failed:
-			print f
-	else:
-		print "successfully ran all tests:"
-		for t in tests:
-			print t['name']
+    if len(failed) > 0:
+            print "failed to run tests:"
+            for f in failed:
+                    print f
+    else:
+            print "successfully ran all tests:"
+            for t in tests:
+                    print t['name']
 
 			
 
 def compare_tests(env, tests):
     base_dir = os.getcwd()
-    try: os.chdir('test_data')
+    try: os.chdir(env['test_data_dir'])
     except:
             print 'failed to locate test_data directory, exiting...'
             return 1
@@ -226,7 +244,7 @@ def compare_tests(env, tests):
     variance = 0.005 #allowed variance in percent
                    #allows two values to differ by up to 0.5%
     for t in tests:
-        x = t['exe']:
+        x = t['exe']
         for c in t['collectors']:
             baseline = 'baseline-' + get_db_name(['oss'+c,x])
             results = 'results-' + get_db_name(['oss'+c,x])
@@ -279,7 +297,7 @@ def compare_tests(env, tests):
                 try: os.rm(compare_file)
                 except: pass
                 continue
-           os.chdir(base_dir)
+            os.chdir(base_dir)
 
     for log in big_log: #summarize results
         print log
@@ -295,15 +313,29 @@ def compare_tests(env, tests):
             print t['name']
 
 def clean_tests(clean_baseline):
-    cmd = 'rm -rf test_data/results*.openss'
+    cmd = 'rm -rf test_data/results/*'
     if clean_baseline:
-        cmd = 'rm -rf test_data/*.openss'
+        cmd = 'rm -rf test_data/baseline/*'
     p = Popen(cmd, shell=True)
     p.wait()
     if p.returncode == 0:
         print 'cleaned test_data folder'
     else:
         print 'failed to clean test data folder, try manually?'
+
+def get_recent(d):
+    recent = None
+    for root, dirs, files in os.walk(d):
+        for entry in dirs:
+            if not recent:
+                recent = entry
+            e = str(entry)
+            r = str(recent)
+            e = datetime.strptime(e.split('_')[0] + ' ' + e.split('_')[1])
+            r = datetime.strptime(r.split('_')[0] + ' ' + r.split('_')[1])
+            if e > r:
+                recent = entry
+    
 
 def main(args=None, error_func=None):
 
@@ -325,12 +357,20 @@ def main(args=None, error_func=None):
     parser.add_argument('--create-baseline-all', action='store_true',
         help='create baseline for all tests')
 
+    parser.add_argument('--build-tests', action='store_true',
+        help='build tests according to parameters in env.json file')
     parser.add_argument('--run-tests', nargs='+', metavar='TEST_NAME', help='run tests')
 
     parser.add_argument('--run-all', action='store_true' , help='run all tests')
 
     parser.add_argument('--compare-tests', nargs='+', metavar='TEST_NAME', help='compare tests')
-    parser.add_argument('--compare-all', action='store_true' , help='compare all tests')
+    parser.add_argument('--compare-all', action='store_true' , help='compare all tests of most recent run')
+
+    parser.add_argument('-b', nargs='?',
+        help='use specific baseline folder in compare, default is the most recent')
+    parser.add_argument('-r', nargs='?',
+        help='use specific results folder in compare, default is the most recent')
+    
 
     parser.add_argument('--clean-run', action='store_true' , help='clean run data')
     parser.add_argument('--clean-all', action='store_true' , help='clean run and baseline data')
@@ -355,15 +395,20 @@ def main(args=None, error_func=None):
         os.chdir(install_dir)
     else:
         os.chdir(install_dir)
-        env = read_env(envfile)
-        
+        env = read_env('env.json')
 
+    env['install_dir'] = install_dir #used to build absolute paths
+
+    if args.build_tests:
+        build_tests(env)
+        exit(0)
+    
     tests = []
-    #look for folders with the test_meta_data.json file
-    for root, dirs, files in os.walk(env['bin_dir'])
+    bd = os.path.join(base_dir, env['bin_dir'])
+    for root, dirs, files in os.walk(bd):
         for entry in files:
-            if os.access(entry, os.X_OK): #check that file has x bit
-                tests.append(test_obj(entry))
+            if os.access(os.path.join(root,entry), os.X_OK): #check that file has x bit
+                tests.append(test_obj(env,entry))
     
     if args.clean_run:
         clean_tests(env, False)
@@ -377,9 +422,11 @@ def main(args=None, error_func=None):
             if test['exe'] in args.run_tests:
                 tests_to_run.append(test)
         run_tests(env, tests_to_run, False) #run tests, no baseline mode
+        exit(0)
 
     elif args.run_all:
         run_tests(env, tests, False) #run tests, no baseline mode
+        exit(0)
 
     #run whichever tests are specified in baseline mode (exclusive to run_tests)
     elif args.create_baseline:
@@ -388,10 +435,17 @@ def main(args=None, error_func=None):
             if test['name'] in args.run_tests:
                 tests_to_run.append(test)
         run_tests(env, tests_to_run, True) #run tests, no baseline mode
+        exit(0)
 
     elif args.create_baseline_all:
         run_tests(env, tests, True) #run tests, no baseline mode
+        exit(0)
 
+    #locate appropriate test data directory for compare
+    baseline_f = get_recent(os.path.join(env['test_data_dir'], 'baseline'))
+    results_f = get_recent(os.path.join(env['test_data_dir'], 'results'))
+
+    
     #compare which test results are specified
     if args.compare_tests:
         tests_to_comp = []

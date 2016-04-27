@@ -1,3 +1,26 @@
 
 openspeedshop-test-suite README: TBD
 
+directory structure after building and running:
+
+openspeedshop-test-suite
+	CMakeLists.txt
+	cmake
+		...
+	bin
+		...
+	build_scripts
+		run_build*.sh
+	env.json
+	src
+		...
+	test-script.py
+	test_data
+		baseline
+			oss_version
+				date
+					openss_dbs...
+		results
+			oss_version
+				date
+					openss_dbs...
