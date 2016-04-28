@@ -246,8 +246,14 @@ def compare_tests(env, tests):
     for t in tests:
         x = t['exe']
         for c in t['collectors']:
-            baseline = 'baseline-' + get_db_name(['oss'+c,x])
-            results = 'results-' + get_db_name(['oss'+c,x])
+            baseline_file = get_db_name(['oss'+c,x])
+            baseline_dir = get_recent('baseline')
+            baseline = os.path.join(baseline_dir, baseline_file)
+
+            results_file = get_db_name(['oss'+c,x])
+            results_dir = get_recent('results')
+            results = os.path.join(results_dir, results_file)
+
             if not os.path.isfile(baseline):
                 err = 'failed to locate baseline file ' + baseline
                 #print err
@@ -297,7 +303,7 @@ def compare_tests(env, tests):
                 try: os.rm(compare_file)
                 except: pass
                 continue
-            os.chdir(base_dir)
+    os.chdir(base_dir)
 
     for log in big_log: #summarize results
         print log
@@ -329,12 +335,12 @@ def get_recent(d):
         for entry in dirs:
             if not recent:
                 recent = entry
-            e = str(entry)
-            r = str(recent)
-            e = datetime.strptime(e.split('_')[0] + ' ' + e.split('_')[1])
-            r = datetime.strptime(r.split('_')[0] + ' ' + r.split('_')[1])
+            fmt_string = '%Y-%m-%d_%H:%M:%S.%f'
+            e = datetime.strptime(entry, fmt_string)
+            r = datetime.strptime(recent, fmt_string)
             if e > r:
                 recent = entry
+    return os.path.join(d,recent)
     
 
 def main(args=None, error_func=None):
@@ -441,10 +447,7 @@ def main(args=None, error_func=None):
         run_tests(env, tests, True) #run tests, no baseline mode
         exit(0)
 
-    #locate appropriate test data directory for compare
-    baseline_f = get_recent(os.path.join(env['test_data_dir'], 'baseline'))
-    results_f = get_recent(os.path.join(env['test_data_dir'], 'results'))
-
+    os.chdir(base_dir)
     
     #compare which test results are specified
     if args.compare_tests:
@@ -454,7 +457,7 @@ def main(args=None, error_func=None):
                 tests_to_comp.append(test)
         compare_tests(env, tests_to_comp)
     elif args.compare_all:
-            compare_tests(env, tests)
+        compare_tests(env, tests)
 
 
 
