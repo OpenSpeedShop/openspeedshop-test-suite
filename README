@@ -1,5 +1,65 @@
+openspeedshop test utility:
 
-openspeedshop-test-suite README: TBD
+to begin:
+1)
+create the environment file env.json with the command
+
+./test-script.py --create-env
+
+this will create a default environment file env.json populated with
+some defaults. Edit these to appropriate values before continuing.
+
+
+2)
+build the tests with the command
+
+./test-script.py --build-tests
+
+3)
+create baselines for the various tests
+
+./test-script.py --create-baseline-all
+
+this can take some time, results will be in
+test_data/baseline/$date by default
+
+4)
+create run data for the various tests
+
+./test-script.py --run-all
+
+this can take some time, results will be in
+test_data/results/$date by default
+
+5)
+compare the results to the baseline data
+TODO: FIX BUG INVOLVING ABSOLUTE PATHS
+
+./test-script.py --compare-all
+
+this tools looks in the most recent results and baseline folders by default
+soon to add specific folder specification.
+by default the tool checks that all values are within 5% of each other.
+this number will be an argument soon
+
+see ./test-script.py --help for more options
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_______________________________________________
 
 directory structure after building and running:
 
