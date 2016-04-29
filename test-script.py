@@ -241,7 +241,7 @@ def compare_tests(env, tests):
             return 1
     failed = [] #list of error messages
     big_log = [] #log of all tests
-    variance = 0.0000005 #allowed variance in percent
+    variance = 0.5 #allowed variance in percent
                    #allows two values to differ by up to 0.5%
     for t in tests:
         x = t['exe']
@@ -275,7 +275,12 @@ def compare_tests(env, tests):
             #TODO, move results and baseline files to a temp dir
             #cd, run, cd, rm
             ##################3
-            cmd = 'osscompare ' + str('\"' + baseline + ',' + results + '\" ' + compare_metric)
+            mk_cd('temp')
+            shutil.copyfile('../' + baseline, './baseline')
+            shutil.copyfile('../' + results, './results')
+
+            #cmd = 'osscompare ' + str('\"' + baseline + ',' + results + '\" ' + compare_metric)
+            cmd = 'osscompare \"baseline,results\" percent'
             #print str(cmd)
             p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
             p.wait()
@@ -284,7 +289,11 @@ def compare_tests(env, tests):
             log = "------------------------------------------------------\n"
             log += 'compare for ' + c + ' on ' + x + ':\n\n'
             all_passed = True
-            print output
+
+            os.chdir('..')
+            shutil.rmtree('temp')
+
+            #print output
             for m in matches:
                 func_name = m.groups()[5]
                 lcount = float(m.groups()[1])
