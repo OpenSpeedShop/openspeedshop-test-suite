@@ -1,5 +1,5 @@
 #! /bin/bash
-
+pushd ..
 rm -rf build_pgi_application_tests
 mkdir -p build_pgi_application_tests
 pushd build_pgi_application_tests
@@ -19,4 +19,5 @@ cmake .. \
 make clean
 make
 make install
+rm -rf build_gnu_application_tests
 
