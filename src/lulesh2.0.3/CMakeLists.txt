@@ -95,3 +95,60 @@ if(HAVE_OPENMPI)
 
 endif()
 
+if(HAVE_MPT)
+
+    # Hybrid OpenMP/MPI executable section -------------------------------------------
+
+    add_executable(hybrid-lulesh-mpt
+        ${LULESH_SOURCES}
+    )
+
+    target_include_directories(hybrid-lulesh-mpt PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${OpenMP_INCLUDE_DIRS}
+	${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(hybrid-lulesh-mpt
+	${CMAKE_DL_LIBS}
+	${Mpt_SHARED_LIBRARIES}
+        ${OPENMP_LIBS}
+	m
+    )
+
+    set_target_properties(hybrid-lulesh-mpt PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};USE_MPI=1")
+    set_target_properties(hybrid-lulesh-mpt PROPERTIES OUTPUT_NAME "hybrid-lulesh-mpt-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS hybrid-lulesh-mpt
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+
+    # MPI executable section -------------------------------------------
+
+    add_executable(mpi-lulesh2.0.3-mpt
+        ${LULESH_SOURCES}
+    )
+
+    target_include_directories(mpi-lulesh2.0.3-mpt PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-lulesh2.0.3-mpt
+        ${CMAKE_DL_LIBS}
+        ${Mpt_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(mpi-lulesh2.0.3-mpt PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};USE_MPI=1")
+    set_target_properties(mpi-lulesh2.0.3-mpt PROPERTIES OUTPUT_NAME "mpi-lulesh-mpt-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-lulesh2.0.3-mpt
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+

@@ -30,33 +30,31 @@ find_path(Mvapich2_INCLUDE_DIR
     NAMES mpi.h
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
-    PATHS /usr /usr/local
     PATH_SUFFIXES include 
-    NO_DEFAULT_PATH
     )
 
 find_library(Mvapich2_LIBRARY_SHARED NAMES mpich
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
-    PATHS /usr /usr/local 
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
-    NO_DEFAULT_PATH
     )
 
 find_library(Mvapich2_verbs_LIBRARY_SHARED NAMES verbs
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
-    PATHS /usr /usr/local 
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
-    NO_DEFAULT_PATH
     )
 
 find_library(Mvapich2_common_LIBRARY_SHARED NAMES common
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
-    PATHS /usr /usr/local 
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
-    NO_DEFAULT_PATH
+    )
+
+find_library(Mvapich2_mpl_LIBRARY_SHARED NAMES mpl
+    HINTS $ENV{MVAPICH2_DIR}
+    HINTS ${MVAPICH2_DIR}
+    PATH_SUFFIXES lib lib64 lib/shared lib64/shared
     )
 
 find_package_handle_standard_args(
@@ -66,22 +64,29 @@ find_package_handle_standard_args(
     )
 
 set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_LIBRARY_SHARED})
-if ($Mvapich_common_LIBRARY_SHARED})
+
+if (${Mvapich2_common_LIBRARY_SHARED})
     set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_common_LIBRARY_SHARED})
 endif()
 
-if ($Mvapich_verbs_LIBRARY_SHARED})
+if (${Mvapich2_verbs_LIBRARY_SHARED})
     set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_verbs_LIBRARY_SHARED})
 endif()
+
+if (${Mvapich2_mpl_LIBRARY_SHARED})
+    set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_mpl_LIBRARY_SHARED})
+endif()
+
+message(STATUS "Mvapich2 Mvapich2_mpl_LIBRARY_SHARED: " ${Mvapich2_mpl_LIBRARY_SHARED})
 
 set(Mvapich2_INCLUDE_DIRS ${Mvapich2_INCLUDE_DIR})
 set(Mvapich2_DEFINES "")
 
 GET_FILENAME_COMPONENT(Mvapich2_LIB_DIR ${Mvapich2_LIBRARY_SHARED} PATH )
 GET_FILENAME_COMPONENT(Mvapich2_DIR ${Mvapich2_INCLUDE_DIR} PATH )
-#message(STATUS "Mvapich2 Mvapich2_SHARED_LIBRARIES: " ${Mvapich2_SHARED_LIBRARIES})
-#message(STATUS "Mvapich2 Mvapich2_INCLUDE_DIR: " ${Mvapich2_INCLUDE_DIR})
-#message(STATUS "Mvapich2 Mvapich2_LIB_DIR: " ${Mvapich2_LIB_DIR})
+message(STATUS "Mvapich2 Mvapich2_SHARED_LIBRARIES: " ${Mvapich2_SHARED_LIBRARIES})
+message(STATUS "Mvapich2 Mvapich2_INCLUDE_DIR: " ${Mvapich2_INCLUDE_DIR})
+message(STATUS "Mvapich2 Mvapich2_LIB_DIR: " ${Mvapich2_LIB_DIR})
 message(STATUS "Mvapich2 found: " ${MVAPICH2_FOUND})
 message(STATUS "Mvapich2 location: " ${Mvapich2_LIB_DIR})
 

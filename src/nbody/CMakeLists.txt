@@ -23,6 +23,7 @@ set(NBODY_SOURCES
 message(STATUS "HAVE_OPENMPI=" ${HAVE_OPENMPI} )
 message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
 
+#	${Mvapich2_INCLUDE_DIRS}
 if(HAVE_OPENMPI)
 
     add_executable(mpi-nbody-openmpi
@@ -47,7 +48,61 @@ if(HAVE_OPENMPI)
     install(TARGETS mpi-nbody-openmpi
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
+endif()
+    
+if(HAVE_MVAPICH2)
 
+    add_executable(mpi-nbody-mvapich2
+        ${NBODY_SOURCES}
+    )
+
+    target_include_directories(mpi-nbody-mvapich2 PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mvapich2_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-nbody-mvapich2
+	${CMAKE_DL_LIBS}
+	${Mvapich2_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-nbody-mvapich2 PROPERTIES COMPILE_DEFINITIONS "${Mvapich2_DEFINES}")
+    set_target_properties(mpi-nbody-mvapich2 PROPERTIES OUTPUT_NAME "mpi-nbody-mvapich2-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-nbody-mvapich2
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+    
+if(HAVE_MPT)
+
+    add_executable(mpi-nbody-mpt
+        ${NBODY_SOURCES}
+    )
+
+    target_include_directories(mpi-nbody-mpt PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-nbody-mpt
+	${CMAKE_DL_LIBS}
+	${Mpt_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-nbody-mpt PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES}")
+    set_target_properties(mpi-nbody-mpt PROPERTIES OUTPUT_NAME "mpi-nbody-mpt-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-nbody-mpt
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
     
     # Create and install static library
 
@@ -92,7 +147,6 @@ if(HAVE_OPENMPI)
 #	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
 #    )
 #
-endif()
 
 #if(HAVE_MPICH2)
 #

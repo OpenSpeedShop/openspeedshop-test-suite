@@ -74,3 +74,57 @@ if(HAVE_OPENMPI)
 
 endif()
 
+if(HAVE_MPT)
+
+    add_executable(mpi-lulesh-mpt
+        ${LULESH_SOURCES}
+    )
+
+    target_include_directories(mpi-lulesh-mpt PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-lulesh-mpt
+	${CMAKE_DL_LIBS}
+	${Mpt_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-lulesh-mpt PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES}")
+    set_target_properties(mpi-lulesh-mpt PROPERTIES OUTPUT_NAME "mpi-lulesh-mpt-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-lulesh-mpt
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+
+if(HAVE_MVAPICH2)
+
+    add_executable(mpi-lulesh-mvapich2
+        ${LULESH_SOURCES}
+    )
+
+    target_include_directories(mpi-lulesh-mvapich2 PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mvapich2_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-lulesh-mvapich2
+	${CMAKE_DL_LIBS}
+	${Mvapich2_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-lulesh-mvapich2 PROPERTIES COMPILE_DEFINITIONS "${Mvapich2_DEFINES}")
+    set_target_properties(mpi-lulesh-mvapich2 PROPERTIES OUTPUT_NAME "mpi-lulesh-mvapich2-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-lulesh-mvapich2
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+
