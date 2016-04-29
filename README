@@ -33,7 +33,6 @@ test_data/results/$date by default
 
 5)
 compare the results to the baseline data
-TODO: FIX BUG INVOLVING ABSOLUTE PATHS
 
 ./test-script.py --compare-all
 
