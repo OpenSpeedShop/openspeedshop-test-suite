@@ -152,6 +152,8 @@ main( int argc, char** argv)
 
     /* --- SETUP --- determine precision and check timing --- */
     MPI_Init (&argc, &argv);
+    int processor;
+    MPI_Comm_rank(MPI_COMM_WORLD, &processor); 
 
     printf(HLINE);
     printf("STREAM version $Revision: 5.9 $\n");
