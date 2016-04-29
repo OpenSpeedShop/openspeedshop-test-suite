@@ -21,4 +21,4 @@ cmake .. \
 make clean
 make
 make install
-rm -rf build_gnu_application_tests
+rm -rf build_intel_application_tests
