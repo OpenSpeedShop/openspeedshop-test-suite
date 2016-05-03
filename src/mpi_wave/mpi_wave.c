@@ -22,8 +22,8 @@
 #include <math.h>
 
 #define MASTER 0
-#define TPOINTS 800
-#define MAXSTEPS  10000
+#define TPOINTS 8000000
+#define MAXSTEPS  100000000
 #define PI 3.14159265
 
 int RtoL = 10;
