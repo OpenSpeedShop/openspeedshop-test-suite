@@ -246,6 +246,8 @@ def compare_tests(env, tests):
     for t in tests:
         x = t['exe']
         for c in t['collectors']:
+            print '_________________________________________'
+            print 'running test ' + x
             baseline_file = get_db_name(['oss'+c,x])
             baseline_dir = get_recent('baseline')
             baseline = os.path.join(baseline_dir, baseline_file)
