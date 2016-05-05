@@ -1,12 +1,6 @@
 #!/usr/bin/python2
-import re
-import json
-import os
-import subprocess
+import re, json, os subprocess, argparse, sys, shutil
 from subprocess import Popen, PIPE
-import argparse
-import sys
-import shutil
 from datetime import datetime
 
 """Open Speed Shop Test Script
@@ -25,16 +19,16 @@ def test_obj(env, file_name):
     test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
     #test['exe'] = file_name
     test['name'] = lst[1]
-    test['mpi_driver'] = lst[3] if len(lst) > 3 else ''
+    test['mpi_imp'] = lst[3] if len(lst) > 3 else ''
     test['compiler'] = lst[-1]
     #determine appropriate collectors, according to the old test-tool.sh
     coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime']
-    if test['mpi_driver'] != '':
+    if test['mpi_imp'] != '':
         coll.extend(['mpi', 'mpit'])
     ##
     if env['dynamic_cbtf']:
         coll.append('mem')
-        if test['mpi_driver'] != '':
+        if test['mpi_imp'] != '':
             coll.append('mpip')
     test['collectors'] = coll
     return test
@@ -75,6 +69,7 @@ def create_env(filename):
         'src_dir':'src',
         'dynamic_cbtf':False,
         'job_controller':'raw',
+        'mpi_drivers':['mpirun -np 2'],
         'compilers':['gnu'] }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
@@ -203,25 +198,49 @@ def raw_job_controller(env, tests):
     base_dir = os.getcwd()
     
     for t in tests: #loop through all tests
-        if t['name'] == 'sweep3d': #need to move input file
-            input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
-            shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
+        if t['mpi_imp'] != '': #check if this an mpi test
+            for mpi in  env['mpi_drivers']: #loop through mpi_commands
+                if t['name'] == 'sweep3d': #need to move input file
+                    input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
+                    shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
 
-        for c in t['collectors']: #loop through all collectors to run
-            #run each collector on the test program
-            cmd = ['oss' + c, t['exe']]
-            print base_dir
-            print cmd[0] + ' ' + cmd[1]
-            p = Popen(cmd)
-            p.wait() #wait for subprocess to finish
-            db_name = get_db_name(cmd) #get the name of the output file
-        #OPTIONAL os.rm(input_file)
-        if p.returncode != 0:
-            print 'failed to run test ' + c + ' ' + t['exe']
-            failed.append(c + ", " + t['exe'])
-        try: os.rm(db_name)
-        except: pass
-                        
+                for c in t['collectors']: #loop through all collectors to run
+                    #run each collector on the test program
+                    #also build the mpirun command
+                    #cmd = ['oss' + c, '\"' + mpi + ' ' + t['exe'] + '\"']
+                    cmd = ['oss' + c, mpi + ' ' + t['exe']]
+                    print base_dir
+                    print cmd[0] + ' ' + cmd[1]
+                    p = Popen(cmd)
+                    p.wait() #wait for subprocess to finish
+                    db_name = get_db_name(cmd) #get the name of the output file
+                #OPTIONAL os.rm(input_file)
+                if p.returncode != 0:
+                    print 'failed to run test ' + c + ' ' + t['exe']
+                    failed.append(c + ", " + t['exe'])
+                try: os.rm(db_name)
+                except: pass
+            
+        else: #not an mpi test, just run once normally
+            if t['name'] == 'sweep3d': #need to move input file
+                input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
+                shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
+
+            for c in t['collectors']: #loop through all collectors to run
+                #run each collector on the test program
+                cmd = ['oss' + c, t['exe']]
+                print base_dir
+                print cmd[0] + ' ' + cmd[1]
+                p = Popen(cmd)
+                p.wait() #wait for subprocess to finish
+                db_name = get_db_name(cmd) #get the name of the output file
+            #OPTIONAL os.rm(input_file)
+            if p.returncode != 0:
+                print 'failed to run test ' + c + ' ' + t['exe']
+                failed.append(c + ", " + t['exe'])
+            try: os.rm(db_name)
+            except: pass
+                            
     if len(failed) > 0:
             print "failed to run tests:"
             for f in failed:

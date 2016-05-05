@@ -14,6 +14,8 @@ bin_dir - directory to store compiled tests in
 build_scripts_dir - directory containing the build scripts, this should probably not be changed
 compilers - the list of compilers to compile with. adding a compilers will call an additional build script.
 		e.g. 'compilers':['gnu','intel']    will set the active build scripts to run_build_gnu.sh and run_build_intel.sh
+mpi_drivers - list of commands you us to run mpi applications, include argments
+		e.g. 'mpi_drivers':['mpirun -np 2']
 
 src_dir - directory containing the source for the tests
 test_data_dir - directory to store the test data

@@ -56,7 +56,7 @@ if(HAVE_OPENMPI)
     target_link_libraries(hybrid-lulesh-openmpi
 	${CMAKE_DL_LIBS}
 	${OpenMPI_SHARED_LIBRARIES}
-        ${OPENMP_LIBS}
+    ${OPENMP_LIBS}
 	m
     )
 
