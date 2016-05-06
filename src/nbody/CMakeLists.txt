@@ -23,7 +23,6 @@ set(NBODY_SOURCES
 message(STATUS "HAVE_OPENMPI=" ${HAVE_OPENMPI} )
 message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
 
-#	${Mvapich2_INCLUDE_DIRS}
 if(HAVE_OPENMPI)
 
     add_executable(mpi-nbody-openmpi
@@ -50,28 +49,28 @@ if(HAVE_OPENMPI)
     )
 endif()
     
-if(HAVE_MVAPICH2)
+if(HAVE_MVAPICH)
 
-    add_executable(mpi-nbody-mvapich2
+    add_executable(mpi-nbody-mvapich
         ${NBODY_SOURCES}
     )
 
-    target_include_directories(mpi-nbody-mvapich2 PUBLIC
+    target_include_directories(mpi-nbody-mvapich PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
-	${Mvapich2_INCLUDE_DIRS}
+	${Mvapich_INCLUDE_DIRS}
     )
 
-    target_link_libraries(mpi-nbody-mvapich2
+    target_link_libraries(mpi-nbody-mvapich
 	${CMAKE_DL_LIBS}
-	${Mvapich2_SHARED_LIBRARIES}
+	${Mvapich_SHARED_LIBRARIES}
 	m
     )
 
-    set_target_properties(mpi-nbody-mvapich2 PROPERTIES COMPILE_DEFINITIONS "${Mvapich2_DEFINES}")
-    set_target_properties(mpi-nbody-mvapich2 PROPERTIES OUTPUT_NAME "mpi-nbody-mvapich2-${BUILD_COMPILER_NAME}")
+    set_target_properties(mpi-nbody-mvapich PROPERTIES COMPILE_DEFINITIONS "${Mvapich_DEFINES}")
+    set_target_properties(mpi-nbody-mvapich PROPERTIES OUTPUT_NAME "mpi-nbody-mvapich-${BUILD_COMPILER_NAME}")
 
-    install(TARGETS mpi-nbody-mvapich2
+    install(TARGETS mpi-nbody-mvapich
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
 
@@ -103,475 +102,31 @@ if(HAVE_MPT)
     )
 
 endif()
-    
-    # Create and install static library
 
-    #set_target_properties(mpi-openmpi-rt-offline PROPERTIES PREFIX "")
+if(HAVE_MPICH)
 
-    #add_library(mpi-openmpi-offline STATIC
-    #    ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
+    add_executable(mpi-nbody-mpich
+        ${NBODY_SOURCES}
+    )
 
-#    target_include_directories(mpi-openmpi-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${OpenMPI_INCLUDE_DIRS}
-#        ${CMAKE_CURRENT_BINARY_DIR}/../../../libopenss-runtime
-#    )
-#
-#    target_link_libraries(mpi-openmpi-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-openmpi-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-openmpi-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${OpenMPI_DEFINES};OPENSS_STATIC") 
-#
-#    install(TARGETS mpi-openmpi-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
+    target_include_directories(mpi-nbody-mpich PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mpich_INCLUDE_DIRS}
+    )
 
-#if(HAVE_MPICH2)
-#
-#    add_library(mpi-mpich2-rt-offline SHARED
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpich2-rt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpich2_INCLUDE_DIRS}
-#    )
-#
-#    target_link_libraries(mpi-mpich2-rt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpich2-rt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpich2-rt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpich2_DEFINES}") 
-#
-#    install(TARGETS mpi-mpich2-rt-offline
-#	LIBRARY DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#    set_target_properties(mpi-mpich2-rt-offline PROPERTIES PREFIX "")
-#
-#    add_library(mpi-mpich2-offline STATIC
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpich2-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpich2_INCLUDE_DIRS}
-#    )
-#
-#
-#    target_link_libraries(mpi-mpich2-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpich2-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpich2-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpich2_DEFINES};OPENSS_STATIC") 
-#
-#    install(TARGETS mpi-mpich2-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#
-#endif()
-#
-#if(HAVE_MPICH)
-#
-#    add_library(mpi-mpich-rt-offline SHARED
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpich-rt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpich_INCLUDE_DIRS}
-#    )
-#
-#    target_link_libraries(mpi-mpich-rt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpich-rt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpich-rt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpich_DEFINES}") 
-#
-#    install(TARGETS mpi-mpich-rt-offline
-#	LIBRARY DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#    set_target_properties(mpi-mpich-rt-offline PROPERTIES PREFIX "")
-#
-#    # Create and install static version
-#
-#    add_library(mpi-mpich-offline STATIC
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpich-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpich_INCLUDE_DIRS}
-#    )
-#
-#
-#    target_link_libraries(mpi-mpich-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpich-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpich-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpich_DEFINES};OPENSS_STATIC") 
-#
-#    install(TARGETS mpi-mpich-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#endif()
-#
-#if(HAVE_MPT)
-#
-#    add_library(mpi-mpt-rt-offline SHARED
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpt-rt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpt_INCLUDE_DIRS}
-#    )
-#
-#    target_link_libraries(mpi-mpt-rt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpt-rt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpt-rt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpt_DEFINES};${SGIMPT_DEFINES}") 
-#
-#    install(TARGETS mpi-mpt-rt-offline
-#	LIBRARY DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#    set_target_properties(mpi-mpt-rt-offline PROPERTIES PREFIX "")
-#
-#    # Create and install static version
-#
-#    add_library(mpi-mpt-offline STATIC
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mpt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mpt_INCLUDE_DIRS}
-#    )
-#
-#
-#    target_link_libraries(mpi-mpt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mpt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mpt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mpt_DEFINES};${SGIMPT_DEFINES};OPENSS_STATIC") 
-#
-#    install(TARGETS mpi-mpt-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#
-#endif()
-#
-#if(HAVE_MVAPICH2)
-#
-#    add_library(mpi-mvapich2-rt-offline SHARED
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mvapich2-rt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mvapich2_INCLUDE_DIRS}
-#    )
-#
-#    target_link_libraries(mpi-mvapich2-rt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mvapich2-rt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mvapich2-rt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mvapich2_DEFINES}") 
-#
-#    install(TARGETS mpi-mvapich2-rt-offline
-#	LIBRARY DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#    set_target_properties(mpi-mvapich2-rt-offline PROPERTIES PREFIX "")
-#
-#    # Create and install static version
-#
-#    add_library(mpi-mvapich2-offline STATIC
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mvapich2-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mvapich2_INCLUDE_DIRS}
-#    )
-#
-#
-#    target_link_libraries(mpi-mvapich2-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mvapich2-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mvapich2-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mvapich2_DEFINES};OPENSS_STATIC") 
-#
-#    install(TARGETS mpi-mvapich2-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#
-#endif()
-#
-#if(HAVE_MVAPICH)
-#
-#    add_library(mpi-mvapich-rt-offline SHARED
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mvapich-rt-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mvapich_INCLUDE_DIRS}
-#    )
-#
-#    target_link_libraries(mpi-mvapich-rt-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mvapich-rt-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mvapich-rt-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mvapich_DEFINES}") 
-#
-#    install(TARGETS mpi-mvapich-rt-offline
-#	LIBRARY DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#    set_target_properties(mpi-mvapich-rt-offline PROPERTIES PREFIX "")
-#
-#    add_library(mpi-mvapich-offline STATIC
-#        ${RT_SOURCES}
-#	offline.c
-#	wrappers.c
-#	wrappers-fortran.c
-#    )
-#
-#    target_include_directories(mpi-mvapich-offline PUBLIC
-#	${CMAKE_CURRENT_SOURCE_DIR}
-#	${CMAKE_CURRENT_BINARY_DIR}
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime
-#	${PROJECT_BUILD_DIR}/libopenss-runtime
-#	${PROJECT_SOURCE_DIR}/libopenss-runtime/offline
-#	${LibMonitor_INCLUDE_DIRS}
-#	${LibUnwind_INCLUDE_DIRS}
-#	${Mvapich_INCLUDE_DIRS}
-#    )
-#
-#
-#    target_link_libraries(mpi-mvapich-offline
-#	${CMAKE_DL_LIBS}
-#	rt
-#	pthread
-#        -Wl,-whole-archive
-#	openss-runtime-offline
-#	openss-runtime-unwind
-#        -Wl,-no-whole-archive
-#	-Bdynamic
-#	${LibUnwind_LIBRARY_SHARED}
-#    )
-#
-#
-#    #set_target_properties(mpi-mvapich-offline PROPERTIES VERSION 1.1.0)
-#    set_target_properties(mpi-mvapich-offline PROPERTIES COMPILE_DEFINITIONS "${TLS_DEFINES};${LibUnwind_DEFINES};${Mvapich_DEFINES};OPENSS_STATIC") 
-#    install(TARGETS mpi-mvapich-offline
-#	ARCHIVE DESTINATION lib${LIB_SUFFIX}/openspeedshop
-#    )
-#
-#
-#endif()
-#
-#endif()
-#
-#file(COPY blobs.x DESTINATION .)
+    target_link_libraries(mpi-nbody-mpich
+	${CMAKE_DL_LIBS}
+	${Mpich_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-nbody-mpich PROPERTIES COMPILE_DEFINITIONS "${Mpich_DEFINES}")
+    set_target_properties(mpi-nbody-mpich PROPERTIES OUTPUT_NAME "mpi-nbody-mpich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-nbody-mpich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+
