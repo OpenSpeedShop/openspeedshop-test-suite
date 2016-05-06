@@ -40,7 +40,6 @@ if(OpenMP_FLAG_DETECTED)
 endif()
 
 
-#	${Mvapich2_INCLUDE_DIRS}
 if(HAVE_OPENMPI)
 
     add_executable(mpi-stream-openmpi
@@ -96,6 +95,60 @@ if(HAVE_OPENMPI)
 
 endif()
     
+if(HAVE_MVAPICH)
+
+    add_executable(mpi-stream-mvapich
+        ${STREAM_SOURCES}
+    )
+
+    target_include_directories(mpi-stream-mvapich PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mvapich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-stream-mvapich
+	${CMAKE_DL_LIBS}
+	${Mvapich_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-stream-mvapich PROPERTIES COMPILE_DEFINITIONS "${Mvapich_DEFINES}")
+    set_target_properties(mpi-stream-mvapich PROPERTIES OUTPUT_NAME "mpi-stream-mvapich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-stream-mvapich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+    # Hybrid OpenMP/MPI executable section -------------------------------------------
+
+    add_executable(hybrid-stream-mvapich
+        ${STREAM_SOURCES}
+    )
+
+    target_include_directories(hybrid-stream-mvapich PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${OpenMP_INCLUDE_DIRS}
+        ${Mvapich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(hybrid-stream-mvapich
+        ${CMAKE_DL_LIBS}
+        ${Mvapich_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(hybrid-stream-mvapich PROPERTIES COMPILE_DEFINITIONS "${Mvapich_DEFINES};USE_MPI=1")
+    set_target_properties(hybrid-stream-mvapich PROPERTIES OUTPUT_NAME "hybrid-stream-mvapich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS hybrid-stream-mvapich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+
+ 
 if(HAVE_MVAPICH2)
 
     add_executable(mpi-stream-mvapich2
@@ -121,7 +174,7 @@ if(HAVE_MVAPICH2)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
 
-    # Hybrid Mvapich2/MPI executable section -------------------------------------------
+    # Hybrid OpenMP/MPI executable section -------------------------------------------
 
     add_executable(hybrid-stream-mvapich2
         ${STREAM_SOURCES}
@@ -141,13 +194,15 @@ if(HAVE_MVAPICH2)
     )
 
     set_target_properties(hybrid-stream-mvapich2 PROPERTIES COMPILE_DEFINITIONS "${Mvapich2_DEFINES};USE_MPI=1")
-    set_target_properties(hybrid-stream-mvapich2 PROPERTIES OUTPUT_NAME "hybrid-stream-openmpi-${BUILD_COMPILER_NAME}")
+    set_target_properties(hybrid-stream-mvapich2 PROPERTIES OUTPUT_NAME "hybrid-stream-mvapich2-${BUILD_COMPILER_NAME}")
 
     install(TARGETS hybrid-stream-mvapich2
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
 
 endif()
+
+
     
 if(HAVE_MPT)
 
@@ -174,7 +229,7 @@ if(HAVE_MPT)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
 
-    # Hybrid Mpt/MPI executable section -------------------------------------------
+    # Hybrid OpenMP/MPI executable section -------------------------------------------
 
     add_executable(hybrid-stream-mpt
         ${STREAM_SOURCES}
@@ -194,7 +249,7 @@ if(HAVE_MPT)
     )
 
     set_target_properties(hybrid-stream-mpt PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};USE_MPI=1")
-    set_target_properties(hybrid-stream-mpt PROPERTIES OUTPUT_NAME "hybrid-stream-openmpi-${BUILD_COMPILER_NAME}")
+    set_target_properties(hybrid-stream-mpt PROPERTIES OUTPUT_NAME "hybrid-stream-mpt-${BUILD_COMPILER_NAME}")
 
     install(TARGETS hybrid-stream-mpt
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
@@ -202,4 +257,59 @@ if(HAVE_MPT)
 
 
 endif()
+ 
     
+if(HAVE_MPICH)
+
+    add_executable(mpi-stream-mpich
+        ${STREAM_SOURCES}
+    )
+
+    target_include_directories(mpi-stream-mpich PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mpich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-stream-mpich
+	${CMAKE_DL_LIBS}
+	${Mpich_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-stream-mpich PROPERTIES COMPILE_DEFINITIONS "${Mpich_DEFINES}")
+    set_target_properties(mpi-stream-mpich PROPERTIES OUTPUT_NAME "mpi-stream-mpich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-stream-mpich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+    # Hybrid OpenMP/MPI executable section -------------------------------------------
+
+    add_executable(hybrid-stream-mpich
+        ${STREAM_SOURCES}
+    )
+
+    target_include_directories(hybrid-stream-mpich PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${OpenMP_INCLUDE_DIRS}
+        ${Mpich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(hybrid-stream-mpich
+        ${CMAKE_DL_LIBS}
+        ${Mpich_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(hybrid-stream-mpich PROPERTIES COMPILE_DEFINITIONS "${Mpich_DEFINES};USE_MPI=1")
+    set_target_properties(hybrid-stream-mpich PROPERTIES OUTPUT_NAME "hybrid-stream-mpich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS hybrid-stream-mpich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+
+endif()
+ 

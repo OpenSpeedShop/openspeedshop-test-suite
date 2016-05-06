@@ -24,6 +24,7 @@ message(STATUS "HAVE_OPENMPI=" ${HAVE_OPENMPI} )
 message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
 
 #	${Mvapich2_INCLUDE_DIRS}
+
 if(HAVE_OPENMPI)
 
     add_executable(mpi-mpi-wave-openmpi
@@ -49,6 +50,34 @@ if(HAVE_OPENMPI)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
 endif()
+    
+if(HAVE_MVAPICH)
+
+    add_executable(mpi-mpi-wave-mvapich
+        ${MPI_WAVE_SOURCES}
+    )
+
+    target_include_directories(mpi-mpi-wave-mvapich PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mvapich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-mpi-wave-mvapich
+	${CMAKE_DL_LIBS}
+	${Mvapich_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-mpi-wave-mvapich PROPERTIES COMPILE_DEFINITIONS "${Mvapich_DEFINES}")
+    set_target_properties(mpi-mpi-wave-mvapich PROPERTIES OUTPUT_NAME "mpi-mpi-wave-mvapich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-mpi-wave-mvapich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+    
     
 if(HAVE_MVAPICH2)
 
@@ -104,3 +133,30 @@ if(HAVE_MPT)
 
 endif()
     
+if(HAVE_MPICH)
+
+    add_executable(mpi-mpi-wave-mpich
+        ${MPI_WAVE_SOURCES}
+    )
+
+    target_include_directories(mpi-mpi-wave-mpich PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${Mpich_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(mpi-mpi-wave-mpich
+	${CMAKE_DL_LIBS}
+	${Mpich_SHARED_LIBRARIES}
+	m
+    )
+
+    set_target_properties(mpi-mpi-wave-mpich PROPERTIES COMPILE_DEFINITIONS "${Mpich_DEFINES}")
+    set_target_properties(mpi-mpi-wave-mpich PROPERTIES OUTPUT_NAME "mpi-mpi-wave-mpich-${BUILD_COMPILER_NAME}")
+
+    install(TARGETS mpi-mpi-wave-mpich
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    )
+
+endif()
+
