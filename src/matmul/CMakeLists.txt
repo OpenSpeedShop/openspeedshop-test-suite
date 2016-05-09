@@ -16,22 +16,33 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 ################################################################################
 
-# sequential only
-add_subdirectory(loopcheck)
-add_subdirectory(matmul)
-add_subdirectory(threads)
-# openmp only
-add_subdirectory(openmp_stress)
-# mpi only
-add_subdirectory(nbody)
-add_subdirectory(sweep3d)
-add_subdirectory(mpi_wave)
-add_subdirectory(IOR)
-# sequential and mpi
-add_subdirectory(lulesh)
-# hybrid(openmp/mpi) and mpi only
-add_subdirectory(stream)
-add_subdirectory(lulesh2.0.3)
+project (matmul Fortran)
+
+set(MATMUL_SOURCES
+	matmul.f90
+)
+
+message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
 
 
+add_executable(sequential-matmul
+    ${MATMUL_SOURCES}
+)
+
+target_include_directories(sequential-matmul PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(sequential-matmul
+    blas
+    lapack
+    ${CMAKE_DL_LIBS}
+)
+
+set_target_properties(sequential-matmul PROPERTIES OUTPUT_NAME "sequential-matmul-${BUILD_COMPILER_NAME}")
+
+install(TARGETS sequential-matmul
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+)
 
