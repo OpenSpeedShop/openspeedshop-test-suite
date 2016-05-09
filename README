@@ -33,7 +33,7 @@ create baselines for the various tests
 
 before doing this be sure to load the mpi and openss modules
 
-./test-script.py --create-baseline-all
+./test-script.py --create-baseline
 
 this can take some time, results will be in
 test_data/baseline/$date by default
@@ -41,7 +41,7 @@ test_data/baseline/$date by default
 4)
 create run data for the various tests
 
-./test-script.py --run-all
+./test-script.py --run-tests
 
 this can take some time, results will be in
 test_data/results/$date by default
@@ -49,7 +49,7 @@ test_data/results/$date by default
 5)
 compare the results to the baseline data
 
-./test-script.py --compare-all
+./test-script.py --compare-tests
 
 this tools looks in the most recent results and baseline folders by default
 soon to add specific folder specification.
