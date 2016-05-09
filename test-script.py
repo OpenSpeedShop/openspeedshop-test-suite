@@ -1,5 +1,5 @@
 #!/usr/bin/python2
-import re, json, os subprocess, argparse, sys, shutil
+import re, json, os, subprocess, argparse, sys, shutil
 from subprocess import Popen, PIPE
 from datetime import datetime
 
@@ -11,6 +11,9 @@ contact snixromero@gmail.com for questions"""
 def get_db_name(cmd):
 	testname = os.path.split(cmd[1])[1]
 	expname = cmd[0][3:]
+        if expname in ['mpi', 'mpit']:
+            mpi_imp = str(os.path.split(cmd[1])[1]).split('-')[2]
+	    return  testname + '-' + expname + '-' + mpi_imp + '.openss'
 	return  testname + '-' + expname + '.openss'
 
 def test_obj(env, file_name):
@@ -259,9 +262,10 @@ def compare_tests(env, tests):
             print 'failed to locate test_data directory, exiting...'
             return 1
     failed = [] #list of error messages
+    succeeded = [] #list of passed tests
     big_log = [] #log of all tests
-    variance = 0.5 #allowed variance in percent
-                   #allows two values to differ by up to 0.5%
+    variance = 10.0 #allowed variance in percent
+                   #allows two values to differ by up to 5.0%
     for t in tests:
         x = t['exe']
         for c in t['collectors']:
@@ -292,10 +296,8 @@ def compare_tests(env, tests):
             elif c == 'hwsamp':
                 compare_metric = 'allEvents'
 
-            #############3
-            #TODO, move results and baseline files to a temp dir
+            #move results and baseline files to a temp dir
             #cd, run, cd, rm
-            ##################3
             mk_cd('temp')
             shutil.copyfile('../' + baseline, './baseline')
             shutil.copyfile('../' + results, './results')
@@ -326,6 +328,7 @@ def compare_tests(env, tests):
                     all_passed = False
             if all_passed:
                 log += 'all function values are within acceptable variance\n'
+                succeeded.append('test ' + c + ' on ' + x + ' passed all tests')
             else:
                 failed.append('test ' + c + ' on ' + x + ' failed a variance test')
             log += "------------------------------------------------------\n"
@@ -344,6 +347,11 @@ def compare_tests(env, tests):
         print log
 
     print '\n\tSUMMARY:\n'
+    if len(succeeded) > 0:
+        print "tests succeeded:"
+        for s in succeeded:
+            print s
+    print "_____________________________"
     if len(failed) > 0:
         print "tests failed:"
         for f in failed:
@@ -392,19 +400,19 @@ def main(args=None, error_func=None):
     parser.add_argument('--create-env', nargs='?', const='env.json',
         metavar='ENV_FILE', help='create a default environment file (default=env.json)')
 
-    parser.add_argument('--create-baseline', nargs='+', metavar='TEST_NAME',
-        help='create baseline for tests')
+    #parser.add_argument('--create-baseline', nargs='+', metavar='TEST_NAME',
+    #    help='create baseline for tests')
 
     parser.add_argument('--create-baseline-all', action='store_true',
         help='create baseline for all tests')
 
     parser.add_argument('--build-tests', action='store_true',
         help='build tests according to parameters in env.json file')
-    parser.add_argument('--run-tests', nargs='+', metavar='TEST_NAME', help='run tests')
+    #parser.add_argument('--run-tests', nargs='+', metavar='TEST_NAME', help='run tests')
 
     parser.add_argument('--run-all', action='store_true' , help='run all tests')
 
-    parser.add_argument('--compare-tests', nargs='+', metavar='TEST_NAME', help='compare tests')
+    #parser.add_argument('--compare-tests', nargs='+', metavar='TEST_NAME', help='compare tests')
     parser.add_argument('--compare-all', action='store_true' , help='compare all tests of most recent run')
 
     parser.add_argument('-b', nargs='?',
