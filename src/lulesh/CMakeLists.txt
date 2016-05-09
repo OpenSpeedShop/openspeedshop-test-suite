@@ -19,6 +19,9 @@
 set(LULESH_SOURCES
 	lulesh.cc
     )
+set(SEQUENTIAL_LULESH_SOURCES
+	seqlulesh.cc
+    )
 
 message(STATUS "HAVE_OPENMPI=" ${HAVE_OPENMPI} )
 message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
@@ -27,7 +30,7 @@ message(STATUS "BUILD_COMPILER_NAME=" ${BUILD_COMPILER_NAME} )
 # sequential build section ---------------------------------------------------------
 
 add_executable(sequential-lulesh
-    ${LULESH_SOURCES}
+    ${SEQUENTIAL_LULESH_SOURCES}
 )
 
 target_include_directories(sequential-lulesh PUBLIC

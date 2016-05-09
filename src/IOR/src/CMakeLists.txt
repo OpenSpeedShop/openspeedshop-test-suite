@@ -16,22 +16,7 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 ################################################################################
 
-# sequential only
-add_subdirectory(loopcheck)
-add_subdirectory(matmul)
-add_subdirectory(threads)
-# openmp only
-add_subdirectory(openmp_stress)
-# mpi only
-add_subdirectory(nbody)
-add_subdirectory(sweep3d)
-add_subdirectory(mpi_wave)
-add_subdirectory(IOR)
-# sequential and mpi
-add_subdirectory(lulesh)
-# hybrid(openmp/mpi) and mpi only
-add_subdirectory(stream)
-add_subdirectory(lulesh2.0.3)
+add_subdirectory(C)
 
 
 
