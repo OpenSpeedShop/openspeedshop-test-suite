@@ -38,7 +38,7 @@ def test_obj(env, file_name):
             coll.append('mpip')
     test['collectors'] = coll
     return test
-        
+
 #####################################
 
 def build_tests(env):
@@ -75,6 +75,7 @@ def create_env(filename):
         'build_scripts_dir':'build_scripts',
         'src_dir':'src',
         'dynamic_cbtf':False,
+        'oss_version': 'oss_offline-2.2.2',
         'job_controller':'raw',
         'mpi_drivers':['mpirun -np 2'],
         'compilers':['gnu'] }
@@ -111,7 +112,8 @@ def run_tests(env, tests, is_baseline):
     """run a list of tests, store the data by data and is_baseline"""
 
     base_dir = os.getcwd()
-    mk_cd('test_data')
+    mk_cd(env['test_data_dir'])
+    mk_cd(env['oss_version'])
     if is_baseline:
         mk_cd('baseline')
     else:
@@ -265,7 +267,9 @@ def raw_job_controller(env, tests):
 def compare_tests(env, tests):
     """compare the results of a list of tests, summarize"""
     base_dir = os.getcwd()
-    try: os.chdir(env['test_data_dir'])
+    try:
+        os.chdir(env['test_data_dir'])
+        os.chdir(env['oss_version'])
     except:
             print 'failed to locate test_data directory, exiting...'
             return 1
@@ -369,9 +373,9 @@ def compare_tests(env, tests):
             print t['name']
 
 def clean_tests(env, clean_baseline):
-    cmd = 'rm -rf ' + env['test_data_dir'] + '/results/*'
+    cmd = 'rm -rf ' + os.path.join(env['test_data_dir'],env['oss_version']) + '/results/*'
     if clean_baseline:
-        cmd = 'rm -rf ' + env['test_data_dir'] + '/baseline/*'
+        cmd = 'rm -rf ' + env['test_data_dir'] + '/*'
     p = Popen(cmd, shell=True)
     p.wait()
     if p.returncode == 0:

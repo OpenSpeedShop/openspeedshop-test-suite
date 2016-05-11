@@ -24,14 +24,14 @@ add_subdirectory(threads)
 add_subdirectory(openmp_stress)
 # mpi only
 add_subdirectory(nbody)
-add_subdirectory(sweep3d)
+#add_subdirectory(sweep3d)
 add_subdirectory(mpi_wave)
 add_subdirectory(IOR)
 # sequential and mpi
-add_subdirectory(lulesh)
+#add_subdirectory(lulesh)
 # hybrid(openmp/mpi) and mpi only
 add_subdirectory(stream)
-add_subdirectory(lulesh2.0.3)
+#add_subdirectory(lulesh2.0.3)
 
 
 
