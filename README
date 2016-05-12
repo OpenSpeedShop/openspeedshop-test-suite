@@ -1,6 +1,29 @@
 openspeedshop test utility:
+__________________________________________________________________________________
 
-to begin:
+The purpose of this utility is to test open speed shop on a number of sample programs and analyze the results. It supports 3 major operations, building, runnning, and comparing.
+
+	- building (use --build-tests) calls one or more of the install scripts located in the build_scripts directory.
+
+	- running the tests can be done with either of the two commands (--create-baseline or --run-tests) the only difference between these commands is the location of the database files. These commands run all the oss tools on all the executable files in the bin directory. these should only be called after building
+		the database directory is as follows:
+			$install_dir/test_data/$oss_version/[baseline,results]/$date/
+
+	- compare (use --compare-tests) this will run openss -batch on each of the database files in the results and baseline folders. Then it will look at the corresponding results and check to see if they are within acceptable variance (default 10.00%). results will be summarized and printed to the screen.
+		by default the script will look for the most recent date folder in the results and baseline folders in the folder for the oss_version specified in environment file. You can manually specify either of these directories with:
+		-b for baseline folder
+		-r for results folder
+		these paths can be absolute or relative to the test_data dir
+		eg. -b oss_offline-2.2.2/baseline/2016-05-11_14:28:21.023070/
+	or use:
+		--baseline-version
+	to use the most recent baseline dir for a version other than what is specifed in the env file.
+		eg. --baseline-version oss_offline-2.2.2
+
+___________________________________________________________________________________
+sample workflow
+__________________________________________________________________________________
+
 1)
 create the environment file env.json with the command
 
@@ -19,6 +42,7 @@ mpi_drivers - list of commands you us to run mpi applications, include argments
 
 src_dir - directory containing the source for the tests
 test_data_dir - directory to store the test data
+oss_version - the current version of openss. This needs to be manually specified until oss has a --version option
 
 
 2)

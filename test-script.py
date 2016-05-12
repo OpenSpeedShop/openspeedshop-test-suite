@@ -264,15 +264,33 @@ def raw_job_controller(env, tests):
             for t in tests:
                     print t['name']
 
-def compare_tests(env, tests):
+def compare_tests(env, tests, args):
     """compare the results of a list of tests, summarize"""
+
     base_dir = os.getcwd()
     try:
         os.chdir(env['test_data_dir'])
-        os.chdir(env['oss_version'])
     except:
             print 'failed to locate test_data directory, exiting...'
             return 1
+
+    try: results_dir = get_recent(os.path.join(env['oss_version'],'results'))
+    except: pass
+    try: baseline_dir = get_recent(os.path.join(env['oss_version'],'baseline'))
+    except: pass
+    #find data directory if the user specified manually
+    if args.b:
+        baseline_dir = args.b
+    if args.r:
+        results_dir = args.r
+    if args.baseline_version:
+        print args.baseline_version
+        baseline_dir = get_recent(os.path.join(args.baseline_version,'baseline'))
+    if results_dir == None or baseline_dir == None or \
+        not os.path.isdir(results_dir) or not os.path.isdir(baseline_dir):
+        print 'invalid test data directory'
+        return 1
+
     failed = [] #list of error messages
     succeeded = [] #list of passed tests
     big_log = [] #log of all tests
@@ -284,11 +302,9 @@ def compare_tests(env, tests):
             print '_________________________________________'
             print 'running test ' + x
             baseline_file = get_db_name(['oss'+c,x])
-            baseline_dir = get_recent('baseline')
             baseline = os.path.join(baseline_dir, baseline_file)
 
             results_file = get_db_name(['oss'+c,x])
-            results_dir = get_recent('results')
             results = os.path.join(results_dir, results_file)
 
             if not os.path.isfile(baseline):
@@ -416,10 +432,12 @@ def main(args=None, error_func=None):
 
     parser.add_argument('--compare-tests', action='store_true' , help='compare all tests of most recent run')
 
-    parser.add_argument('-b', nargs='?',
+    parser.add_argument('-b', nargs='?', type=str,
         help='use specific baseline folder in compare, default is the most recent')
-    parser.add_argument('-r', nargs='?',
+    parser.add_argument('-r', nargs='?', type=str,
         help='use specific results folder in compare, default is the most recent')
+    parser.add_argument('--baseline-version', nargs='?', type=str,
+        help='use the most recent baseline folder in this oss version to compare against')
     
 
     parser.add_argument('--clean-run', action='store_true' , help='clean run data')
@@ -501,7 +519,8 @@ def main(args=None, error_func=None):
     #            tests_to_comp.append(test)
     #    compare_tests(env, tests_to_comp)
     if args.compare_tests:
-        compare_tests(env, tests)
+        compare_tests(env, tests, args)
+            
     
 ########
 main()
