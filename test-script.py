@@ -77,6 +77,7 @@ def create_env(filename):
         'dynamic_cbtf':False,
         'oss_version': 'oss_offline-2.2.2',
         'job_controller':'raw',
+        'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 2'],
         'compilers':['gnu'] }
     envfile = open(filename,'w')
@@ -294,8 +295,8 @@ def compare_tests(env, tests, args):
     failed = [] #list of error messages
     succeeded = [] #list of passed tests
     big_log = [] #log of all tests
-    variance = 10.0 #allowed variance in percent
-                   #allows two values to differ by up to 10.0%
+    variance = env['acceptable_variance']  #allowed variance in percent
+
     for t in tests:
         x = t['exe']
         for c in t['collectors']:

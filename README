@@ -43,6 +43,7 @@ mpi_drivers - list of commands you us to run mpi applications, include argments
 src_dir - directory containing the source for the tests
 test_data_dir - directory to store the test data
 oss_version - the current version of openss. This needs to be manually specified until oss has a --version option
+acceptable_variance - floating point value in percent. maximum factor by which baseline and results values can differ and still be allowed to pass
 
 
 2)
