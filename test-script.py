@@ -41,29 +41,50 @@ def test_obj(env, file_name):
 
 #####################################
 
-def build_tests(env):
-    """run the cmake in the build_scripts folder"""
-
+def run_cmake(build_dir, flags):
+    """run a cmake sequence, build dir, cd, cmake, make, cleanup..."""
     base_dir = os.getcwd()
-    os.chdir(env['build_scripts_dir'])
-    compilers = env['compilers']
-    log = []
-    for cc in compilers:
-        cwd = os.getcwd()
-        buildcmd = 'run_build_' + cc +'.sh' #identify build script
-        buildcmd = os.path.join(cwd,buildcmd)
-        print buildcmd
-        p = Popen(buildcmd)
+    try: shutil.rmtree(build_dir)
+    except: pass
+    mk_cd(build_dir)
+    f = lambda x: x[0] + '=' + x[1]
+    flags = list(map(f,flags))
+    cmd = ['cmake', '..'] + flags
+
+    for c in [cmd, ['make', 'clean'], ['make'], ['make', 'install']]:
+        p = Popen(c)
         p.wait()
         if p.returncode != 0:
-            log.append('build script ' + buildcmd + ' failed')
-        else:
-            log.append('build script ' + buildcmd + ' succeeded')
+            print c[0] + ' failed:'
+            print str(c)
+            exit(1)
 
-    print '\tSUMMARY:'
-    for l in log:
-        print l
     os.chdir(base_dir)
+    shutil.rmtree(build_dir)
+    
+
+def build_tests(env):
+    """run cmake to build the tests with each of the compilers specified in the env"""
+    cmake_flags = [('-DCMAKE_INSTALL_PREFIX', '..'),
+        ('-DCMAKE_BUILD_TYPE', 'None'),
+        ('-DCMAKE_CXX_FLAGS', '-g -O2'),
+        ('-DCMAKE_C_FLAGS', '-g -O2'),
+        ('-DOPENMPI_DIR', env['openmpi_root'])]
+
+    if 'intel' in env['compilers']:
+        intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
+            ('-DCMAKE_C_COMPILER', 'icc'),
+            ('-LIBIOMP_DIR', env['ompt_root']),
+            ('-DBUILD_COMPILER_NAME', 'intel')]
+        run_cmake('intel_build', cmake_flags + intel_flags)
+    
+    if 'pgi' in env['compilers']:
+        pgi_flags = [('-DBUILD_COMPILER_NAME', 'pgi')]
+        run_cmake('pgi_build', cmake_flags + pgi_flags)
+    
+    if 'gnu' in env['compilers']:
+        gnu_flags = [('-DBUILD_COMPILER_NAME', 'gnu')]
+        run_cmake('gnu_build', cmake_flags + gnu_flags)
 
 def create_env(filename):
     """create the default environment file"""
@@ -78,7 +99,9 @@ def create_env(filename):
         'oss_version': 'oss_offline-2.2.2',
         'job_controller':'raw',
         'acceptable_variance':10.0,
-        'mpi_drivers':['mpirun -np 2'],
+        'mpi_drivers':['mpirun -np 8'],
+        'openmpi_root':'/opt/openmpi-1.10.2',
+        'ompt_root':'/opt/ompt_v2.2.2',
         'compilers':['gnu'] }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
