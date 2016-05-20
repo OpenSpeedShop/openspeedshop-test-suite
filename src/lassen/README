@@ -1,0 +1,231 @@
+
+============================================================
+OVERVIEW
+============================================================
+
+This version contains four versions of the LASSEN application. 
+
+1. lassen_serial  :  The serial version 
+    - Usage lassen_serial <initfile> nx ny [nz] 
+
+    - initfile can be 'default', in which case the default problem
+      setup is used.  In 2D this is an a unit square with a point
+      source in one corner.  In 3D it is a unit cube with one source
+      in the corner.  If the initfile is not 'default' then it refers
+      to a filename that contains instructions on how to setup the
+      problem This fileformat is describe below.  In either case, the
+      mesh is cartesian and command line arguments are given to
+      describe the number of domains and zones in each dimension.  The
+      code itself works over an unstructured mesh representation,
+      although currently there is no way to specify a non-cartesian
+      mesh.
+ 
+    - If nx and ny are provided, the algorithm runs in 2D
+    - If nx, ny, and nz are provided, the algorithm runs in 3D
+
+2. lassen_mpi     :  The MPI domain decomposed version  
+    - Usage lassen_mpi  <initfile>  domainsI domainsJ [domainsK] nx ny [nz] 
+    - initfile has the same meaning as the lassen_serial case.
+    - nx,ny,nz have the same meaning as the lassen_serial case.
+    - domainI, domainJ and domainK represent the domain decomposition in each dimension
+    - In 2D: (domainsI * domainsJ) must equal the MPI comm size
+    - In 3D: (domainsI * domainsJ * domainsK) must equal the MPI comm size
+
+3. lassen_charm   :  The Charm++ version
+    - Usage lassen_charm <initfile> domainsI domainsJ [domainsK] nx ny [nz]
+    - initfile has the same meaning as the lassen_serial case.
+    - nx,ny,nz have the same meaning as the lassen_serial case.
+    - domainI, domainJ and domainK represent the domain decomposition in each dimension
+    - lassen_charm supports domain overloading, therefore the domains
+      can be set independently of MPI comm size
+    - Load balancing can be set by adding "+balancer <LoadBalancerName>" to the command line.
+        - See charm documentation for mode details.
+
+        - The load balancing feature in this mini-apps behaves
+          correctly, however, it has not yet been tuned to achieve
+          optimal performance.  There are feature of Charm++ that can
+          be used to improve the decision making.  This is future
+          work.
+
+        - In the mean-time, the load balancing is somewhat arbitrarily
+          chosen to turn on every 100 cycles.  In some scenarios this
+          is too frequent.  In fact, there is an option in Charm++
+          called LBPeriod that does not permit the load balancing to
+          run more frequently.  The default is 1 second.  To avoid
+          unnecessary delays, set LBPeriod to 0 by adding "+LBPeriod
+          0.0" to the command line.
+
+4. lassen_charmmpi:  The MPI/Charm++ interoperabily version
+    - Usage lassen_charmmpi <initfile> domainsI domainsJ [domainsK] nx ny [nz]
+    - initfile has the same meaning as the lassen_serial case.
+    - nx,ny,nz have the same meaning as the lassen_serial case.
+    - domainI, domainJ and domainK represent the domain decomposition in each dimension
+    - In 2D: (domainsI * domainsJ) must equal the MPI comm size
+    - In 3D: (domainsI * domainsJ * domainsK) must equal the MPI comm size
+
+============================================================
+BUILD
+============================================================
+
+
+The Makefile is very simple, and will need to be modified to fit your
+needs.  The following will most likely Makefile variables you will
+need to change.
+
+ * CXX - the C++ compiler
+
+ * CXXFLAGS - Optimization and preprocessor flags
+
+ * MPICXX - The MPI wrapper to C++
+
+ * MPILDFLAGS - The MPI linker flags, needed when compiling a charm version
+
+ * CHARMDIR - Location of your charm implementation. 4.6.0 or later is
+   needed for the MPI interoperability.
+
+ * HAVE_SILO - If you want to output the results to silo files
+ 
+ * SILO_DIR - location of the Silo installation.
+
+============================================================
+RUN 
+============================================================
+
+The four versions all solve the same problem.  In 2D the problem
+domain is a unit square.  In 3D the problem domain is a unit cube.
+The simulation begins when a source is placed at one of the corners.
+A wave is created and moved away from the source at a constant speed.
+At the end of the simulation, an estimate of error is provided.  This
+number should decrease as the resolution increased.  If silo has been
+installed, then an output file will be generated that can be
+visualized with VisIt.
+
+More interesting problems setups are possible, but they require source
+code changes.  Obstacles or areas of faster or slower propogation can
+be introduced.  
+
+Examples:
+ (srun is used as the example program to launch a parallel job)
+
+
+# Serial
+srun ./lassen_serial default 1000 1000
+srun ./lassen_serial default 100 100 100
+
+# MPI Parallel
+srun -n 4  ./lassen_mpi default  2 2 2000 2000
+srun -n 8  ./lassen_mpi default  2 2 2 200 200 200 
+
+# Charm Parallel, without domain overloading (comparable to the MPI runs)
+srun -n 4 ./lassen_charm +LBPeriod 0.0  default 2 2   2000 2000 
+srun -n 8 ./lassen_charm +LBPeriod 0.0  default 2 2 2 200 200 200
+
+# Charm++ Parallel, with domain overloading (usually better scaling than the MPI runs)
+srun -n 8 ./lassen_charm  +LBPeriod 0.0  default  8 8   2000 2000
+srun -n 8 ./lassen_charm  +LBPeriod 0.0  default 4 4 4 200 200 200
+
+# Charm++ Parallel, with domain overloading and load balancing
+#  Load balancing works, but in some cases the overhead slows down the problem
+#  Many load balancers come with Charm++, see Charm++ documentation for other options
+srun -n 8 ./lassen_charm +balancer GreedyLB +LBPeriod 0.0  default 8 8   2000 2000
+srun -n 8 ./lassen_charm +balancer GreedyLB +LBPeriod 0.0  default 4 4 4 200 200 200
+
+# Charm++/MPI Interoperability.  This run sthe same problem as the MPI version.  
+# The point here is that MPI hands over control of the simulation to Charm++
+srun -n 4 ./lassen_charmmpi default 2 2   2000 2000
+srun -n 8 ./lassen_charmmpi default 2 2 2 200 200 200
+
+
+============================================================
+PERFORMANCE NOTES
+============================================================
+
+Due to the nature of the problem, the domain overloading feature in
+the Charm++ version is an advantage (up to a point).  Fewer processors
+are idle, since the each process owns domains in different areas of
+the problem.  Also, the load balancing with domain overloading can be
+an additional advantage.  The GreedyLB in combination with the custom
+cost model (in the UserSetLBLoad function) seems to work best for the
+simple box problem setup.  
+
+Example performance results:
+
+Processors      Executable      Domain I/J/K    nx ny nz        Load Balance    Time
+32              MPI             2 4 4           200 200 200     N/A             50.5
+32              CHARM           2 4 4           200 200 200     none            56.9
+
+32              CHARM           4 4 4           200 200 200     none            56.6
+32              CHARM           4 4 4           200 200 200     GreedyLB        45.3
+
+32              CHARM           4 8 8           200 200 200     none            45.5
+32              CHARM           4 8 8           200 200 200     GreedyLB        39.7
+
+32              CHARM           8 8 8           200 200 200     none            47.9
+32              CHARM           8 8 8           200 200 200     GreedyLB        37.4
+
+
+============================================================
+ALTERNATE SETUPS:
+============================================================
+
+Two examples are provided in the setup directory.  
+
+  - gaps        - the wave must travel around an obstacle, the recombine
+  - boundary    - An obstacle forces the wave to traverse around the boundary of the domain.
+
+Example Usage:
+  - ./lassen_serial setup/gaps 100 100 
+
+File format:
+
+ size x <x> y <y> z <z>  
+
+   - The problem domain starts at 0,0,0 and goes to (x,y,z).  In 2D,
+     the z component is not needed and ignored.
+
+ defvel <vel>
+
+   - The default wave propagation velocity in the material.  It
+     defaults to 1.0.
+
+ box vel <vel> x1 <x1>  x2 <x2>   y1 <y1>  y2 <y2>   z1 <z1>  z2 <z2> 
+
+   - Defines a region inside the problem domain: (x1,y1,z1) to
+     (x2,y2,z2).  Inside that region, the velocity of the wave is
+     given by <vel>.  If <vel> is 0.0, then this region is an
+     obstacle.  In 2D, the z1 and z2 components are not needed and
+     ignored.  The velocities are "painted" onto the mesh.  The box
+     commands are applied in the order given in the file.  Therefore
+     somewhat complex shapes can be defined by combining box
+     statements.
+
+
+ source delay <delay>  x <x>  y <y>  z <z> 
+
+   - Define a source for the wave propagation at (x,y,z).  The source
+     becomes active at time == delay.
+
+Example (from setup/gaps>
+
+---
+size x 2.0 y 1.0 z 1.0
+defvel 1.0
+
+box vel 0.0     x1 0.30  x2 1.50    y1 0.00  y2 1.00    z1 0.00 z2 1.00
+
+box vel 1.0     x1 0.30  x2 0.50    y1 0.00  y2 0.10    z1 0.00 z2 0.10
+box vel 1.0     x1 0.30  x2 0.50    y1 0.90  y2 1.00    z1 0.00 z2 0.10
+box vel 1.0     x1 0.30  x2 0.50    y1 0.00  y2 0.10    z1 0.90 z2 1.00
+box vel 1.0     x1 0.30  x2 0.50    y1 0.90  y2 1.00    z1 0.90 z2 1.00
+box vel 1.0     x1 0.30  x2 0.50    y1 0.45  y2 0.55    z1 0.45 z2 0.55
+
+source delay 0.0  x 0.0   y 0.5  z 0.5 
+source delay 0.0  x 0.0   y 0.0  z 0.0
+source delay 0.0  x 0.0   y 1.0  z 0.0 
+source delay 0.0  x 0.0   y 0.0  z 1.0
+source delay 0.0  x 0.0   y 1.0  z 1.0 
+
+---
+
+
+

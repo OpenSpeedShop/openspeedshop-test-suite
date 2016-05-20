@@ -1,0 +1,412 @@
+
+
+module SimulationCHARM {
+
+   readonly CProxy_Interface interfaceProxy;
+   readonly CProxy_SimulationCHARM simProxy;
+
+   
+   chare Interface {
+      entry Interface(int numDomains);
+      entry void doneSetup( void );
+      entry void doneRun( void );
+      entry void doneCheck( void );
+      
+      entry void run( void ) {
+         atomic {
+         }
+         when doneSetup( void ) atomic {
+            simProxy.begin();
+         }
+         when doneRun( void ) atomic {
+            simProxy.computeErrors();
+         }
+         when doneCheck( void ) atomic {
+            CkExit();
+         }
+      };
+   }
+      
+
+   array [1D] SimulationCHARM {
+      
+      entry SimulationCHARM(  );
+            
+      entry void setup( );
+
+      entry void setupRegular(  std::string &initfile, int dim, int numDomains[dim],
+                                int numGlobalZones[dim], double zoneSizes[dim] )
+      {
+         atomic {
+            MeshConstructor::MakeRegularDomain( domain, dim, 
+                                                thisIndex, numDomains, numGlobalZones, zoneSizes );
+
+            zoneVelocity.assign( mesh->nzones, 1.0 );
+
+            Real sourceRad;
+            if (dim == 2) {
+               sourceRad = 2.0 * std::max(zoneSizes[0], zoneSizes[1]);
+            }
+            else {
+               sourceRad = 2.0 * std::max( std::max(zoneSizes[0], zoneSizes[1]),  zoneSizes[2]);
+            }
+
+            ProblemSetup( initfile, *this, sourceRad );
+            initData.checkErrors = (initfile == "default");
+            interfaceProxy.doneSetup();
+         }
+      };
+
+      // fix me, this is used in conjunction with globalMin, globalMax, to make an inplace reduction.
+      // such that the client can say:  gval = sim->globalMin( lval );
+      entry [reductiontarget] void lastReductionEntry( Real value ) {
+         atomic {
+            lastReduction.value = value;
+         }
+      };
+
+      entry  void begin( void ) {
+         atomic {
+            timers.initialize[0] = LassenUtil::timer();
+            Simulation::initialize();
+            
+            // Determine the set of boundary nodes, based on the connectivity
+            // of the mesh no communicaiton needed.
+            initializeBoundaryNodes(initData.boundaryNodes);
+            
+            // Determine the set of communicating nodes, based on the
+            // connectivity of the mesh no communicaiton needed.
+            initializeCommunicatingNodes(initData.boundaryNodes, initData.communicatingNodes);
+            
+            // Initialize the node communicaiton
+            // required communication
+            thisProxy[thisIndex].initializeNodeCommunicationEntry( );
+            
+            // Initialize the facet communicaiton
+            // required communication
+            thisProxy[thisIndex].initializeFacetCommunicationEntry( );
+         }
+         for (initData.imsg4 = 0; initData.imsg4 < domain->numDomains; ++initData.imsg4) {
+            when doneInitialize() atomic {
+               runData.done = 0;
+               timers.initialize[1] = LassenUtil::timer();
+
+               // fixme -- add a charm specific banner
+               printBanner();
+               if (domain->domainID == 0) {
+                  CkPrintf("number of PEs %d\n", CkNumPes() );
+                  CkPrintf("number of domains = %d\n", domain->numDomains);
+               }
+               
+               timers.run[0] = LassenUtil::timer();
+               thisProxy[thisIndex].runEntry();
+            }
+         }
+
+      };
+
+      // An entry method to call when initialization is complete.
+      entry void doneInitialize(void);
+      
+      // An entry method to call when the communicateFront phase is complete
+      entry void doneCommunicateFront(void );
+
+      // An entry method to call when the synchronize node data phase is complete
+      entry void doneSynchronizeNodeData( void );
+      
+      // An entry method to call from ResumeFromSync
+      entry void doneAtSync( void );
+      
+      // reductions
+      entry [reductiontarget] void reduceTimeStep( Real mindt );
+      entry [reductiontarget] void reduceEndingCriteria( int size, int done[size] );
+      
+      
+      entry void runEntry( void ) {
+         while ( !runData.done ) {
+            atomic {
+               if (cycle % 100 == 0 && cycle > 0 ) {
+                  //  thisProxy[thisIndex].doneAtSync(); // no load balancing
+                  AtSync(); // load balancing
+               }
+               else {
+                  thisProxy[thisIndex].doneAtSync();
+               }
+            }
+            when doneAtSync(void )  atomic {
+               printProgress();
+               runData.stepState.nodeTempArray.resize( mesh->nnodes );
+               runData.stepState.planarFront = PlanarFront();
+               updateSources( runData.stepState );
+               
+               updateNarrowband( runData.stepState );
+               updateNearbyNodes( runData.stepState );
+               constructFront( runData.stepState );
+               
+               thisProxy[thisIndex].communicateFrontEntry( ); 
+            }
+            when doneCommunicateFront( void ) atomic {
+               constructDistancesToFront( runData.stepState ); 
+               convertNearbyNodesToNarrowBandNodes( runData.stepState );
+               computeNextTimeStep( runData.stepState );
+               CkCallback cb(CkReductionTarget(SimulationCHARM, reduceTimeStep), thisProxy );
+               contribute( sizeof(Real), &dt, CkReduction::min_double, cb );
+            }
+            when reduceTimeStep( Real mindt ) atomic {
+
+               dt = mindt;
+               computeTimeIntegral( runData.stepState );
+               thisProxy[thisIndex].synchronizeNodeDataEntry( );
+               // Update timer/cycle
+            }
+            when doneSynchronizeNodeData() atomic {
+               this->cycle ++;
+               this->time += this->dt;
+               int done = checkEndingCriteria();
+               int busy = narrowBandNodes.size() > 1;
+               int ldata[3] = {done, busy, narrowBandNodes.size() };
+               CkCallback cb(CkReductionTarget(SimulationCHARM, reduceEndingCriteria), thisProxy );
+               contribute( 3 * sizeof(int), ldata, CkReduction::sum_int, cb );
+            }
+            when reduceEndingCriteria( int size, int done[size] ) atomic {
+                runData.done = (done[0] == domain->numDomains);
+                numBusyDomains = done[1];
+                numGlobalNarrowBandNodes = done[2];
+            }
+         }
+         atomic {
+            timers.run[1] = LassenUtil::timer();
+            printFinal();
+#if HAVE_SILO
+            OutputSilo silo( this, "lassenCharm" );             
+            silo.writeSimulation( &runData.stepState);
+#endif
+            interfaceProxy.doneRun();
+         }
+      };
+      
+      
+      ////////////////////////////////////////////////////////////////////////////////
+      // initializeNodecommunication
+      
+      entry void nodeCommunicationRecvMsg(int who, std::vector<GlobalID> &msg);
+      
+      entry void initializeNodeCommunicationEntry( void ) {
+         atomic {
+            const std::vector<int> &communicatingNodes = initData.communicatingNodes;            
+            initData.nodeToDomainPair.clear();
+            
+            std::vector<GlobalID> sendBuffer;
+            nodeCommunicationCreateMsg( communicatingNodes, sendBuffer );
+            for(int i = 0; i < this->domain->neighborDomains.size(); ++i) {
+               int neighbor = domain->neighborDomains[i];
+               thisProxy[neighbor].nodeCommunicationRecvMsg(thisIndex, sendBuffer);
+            }
+         }
+         for (initData.imsg1 = 0; initData.imsg1 < this->domain->neighborDomains.size(); ++initData.imsg1 ) {
+            when nodeCommunicationRecvMsg(int who, std::vector<GlobalID> &msg) 
+            atomic {
+               // FIXME - need a way to convert from a domainIndex to a index in the neighborDomains.
+               int domainIndex = 1;
+               for (int i = 0; i < this->domain->neighborDomains.size(); ++i) {
+                  if (this->domain->neighborDomains[i] == who) {
+                     domainIndex = i;
+                     break;
+                  }
+               }
+               assert( domainIndex != -1 );
+               nodeCommunicationProcessMsg( domainIndex, msg, initData.nodeToDomainPair );
+            }
+         }
+         atomic {
+            nodeCommunicationComplete(initData.nodeToDomainPair);
+         }
+      };
+
+      ////////////////////////////////////////////////////////////////////////////////
+      // initializeFacetCommunication
+
+      entry void facetCommunicationRecvBoundingBox( int who, BoundingBox bb );
+      entry void facetCommunicationRecvNodePoints( int who, std::vector<Point> &buf, BoundingBox &bb );
+
+
+      entry void initializeFacetCommunicationEntry( void ) {
+         // compute the bounding box for the domain, and send it to every other domain
+         atomic {
+            const std::vector<int> &boundaryNodes = initData.boundaryNodes;
+         
+            computeBoundingBox( mesh->nodePoint, mesh->nLocalNodes,
+                                initData.boundingBox );
+            // All to all
+            thisProxy.facetCommunicationRecvBoundingBox( thisIndex, initData.boundingBox );
+
+            // Create a buffer of boundary node positions
+            // this will be sent to the overlap domains.
+            initData.boundaryNodePoints.resize(boundaryNodes.size());
+            for (int i =0 ; i < boundaryNodes.size(); ++i) {
+               int nodeIndex = boundaryNodes[i];
+               initData.boundaryNodePoints[i] = mesh->nodePoint[nodeIndex];
+            }
+            initData.numOverlap = 0;
+
+            // Create the spatial grid of the zone centers, to be used later
+            initData.zoneCenter.resize(mesh->nzones);
+            computeZoneCenters( mesh, initData.zoneCenter );
+            // FIXME:  don't forget to delete.
+            initData.grid = new SpatialGrid(initData.zoneCenter, this->getNarrowBandWidth() );
+            initData.cutoffDistance = 2 * this->getNarrowBandWidth();
+            initData.facetToDomainPair.clear();
+         }
+         // receive the bounding boxes from other domains and check for overlap
+         // if there is an overlap, then send the boundary node points
+         for (initData.imsg2 = 0; initData.imsg2 < this->domain->numDomains; ++initData.imsg2 ) {
+            when facetCommunicationRecvBoundingBox(int otherDomain, BoundingBox bb) 
+            atomic {
+               if (otherDomain != domain->domainID) {
+                  if (boundingBoxIntersection(bb, initData.boundingBox, this->getNarrowBandWidth() ) ) {
+                     // overlap with the otherDomain.  Send that domain my boundary node positions
+                     initData.numOverlap += 1;
+                     thisProxy[otherDomain].facetCommunicationRecvNodePoints( domain->domainID,
+                                                                              initData.boundaryNodePoints,
+                                                                              initData.boundingBox );
+                  }
+               }
+            }
+         }
+         // receive the boundary node points from the overlapping domain.
+         
+         for (initData.imsg3 = 0; initData.imsg3 < initData.numOverlap; ++initData.imsg3 ) {
+            when facetCommunicationRecvNodePoints(int otherDomain, std::vector<Point> &overlapPoint,
+                                                  BoundingBox &otherBoundingBox) 
+            atomic {
+               bool toSend = findFacetDomainOverlap( *initData.grid,
+                                                     initData.zoneCenter,
+                                                     otherDomain,
+                                                     overlapPoint,
+                                                     otherBoundingBox,
+                                                     initData.cutoffDistance,
+                                                     initData.facetToDomainPair);
+               if (toSend) {
+                  facetNeighbors.push_back( otherDomain );
+               }
+            }
+         }
+         atomic {
+            constructFacetToDomain( initData.facetToDomainPair );
+            thisProxy[thisIndex].doneInitialize();
+            
+         }
+      };
+
+      ////////////////////////////////////////////////////////////////////////////////
+      // communicateFront
+      entry void receiveFacets( int sender, int active, PlanarFront &facets );
+
+
+      entry void communicateFrontEntry( void ) {
+         atomic {
+            PlanarFront &front = runData.stepState.planarFront;
+            // FIXME -- this block can be a function on SimulationParallel
+
+            std::vector< PlanarFront > messages( facetNeighbors.size() );
+            for (int i = 0; i < front.nfacets; ++i) {
+               int zoneIndex = front.facetZone[i];
+               int startDomain = facetToDomainOffset[ zoneIndex ];
+               int endDomain = facetToDomainOffset[ zoneIndex + 1 ];
+               if (startDomain == endDomain) {
+                  continue; // this is an entirely local facet
+               }
+               // Pack up the facet for communication:
+               for (int j = startDomain; j < endDomain; ++j) {
+                  int receiverID = facetToDomain[j];
+                  messages[ receiverID ].addFacet( &front, i );
+               }
+            }
+
+            // BCM - FIXME - ARE WE SURE THAT FACET NEIGHBORS IS SYMMETRIC?
+            //  -- fixed in MPI version.  need to fix in Charm++ version.
+            for (size_t i = 0; i < facetNeighbors.size(); ++i) {
+               int domainID = facetNeighbors[i];
+               int active = narrowBandNodes.size() > 0;
+               thisProxy[domainID].receiveFacets( thisIndex, active, messages[ i ] );
+            }
+            // fixme -- do this without looping over numDomains
+            runData.activeDomains.resize( domain->numDomains, 0);
+            for (int i = 0; i < domain->numDomains; ++i) {
+               runData.activeDomains[i] = 0;
+            }
+         }
+         for ( commFront.imsg = 0; commFront.imsg < facetNeighbors.size(); ++commFront.imsg ) {
+            when receiveFacets( int sender, int active, PlanarFront &facets )
+               atomic {
+               runData.stepState.planarFront.addFacet( &facets );
+               runData.activeDomains[sender] = active;
+            }
+         }
+         atomic {
+            thisProxy[thisIndex].doneCommunicateFront();
+         }
+      };
+
+      ////////////////////////////////////////////////////////////////////////////////
+      // synchronizeNodeData
+      entry void receiveNodeData( std::vector<NodeData> &recvBuffer);
+      
+      entry void synchronizeNodeDataEntry( void ) {
+         atomic {
+
+            std::vector< std::vector< NodeData > > sendBuffer( domain->neighborDomains.size() );
+            gatherNodeData( sendBuffer );
+
+            for (int i = 0; i < domain->neighborDomains.size(); ++i) {
+               int neighborID = domain->neighborDomains[i];
+               thisProxy[ neighborID ].receiveNodeData( sendBuffer[i] );
+            }
+         }
+
+         for ( runData.imsg1 = 0; runData.imsg1 < domain->neighborDomains.size(); ++runData.imsg1 ) {
+            when receiveNodeData( std::vector<NodeData> &recvBuffer )
+               atomic {
+               accumulateNodeData( recvBuffer );
+            }
+         }
+         atomic {
+            // Sort the narrowband nodes.
+            std::sort( narrowBandNodes.begin(), narrowBandNodes.end());
+            thisProxy[thisIndex].doneSynchronizeNodeData();
+            
+         }
+      };
+
+      
+      entry [reductiontarget] void combineComputeErrors( ComputeErrors err );
+      entry void computeErrors(void ) {
+         atomic {
+            if (initData.checkErrors) {
+               ComputeErrors err;
+               err.computeLocalErrors( this );
+               CkCallback cb(CkReductionTarget(SimulationCHARM, combineComputeErrors), thisProxy);
+               contribute( sizeof(ComputeErrors), &err, reduce_CheckErrorType, cb);
+            }
+            else {
+               interfaceProxy.doneCheck( );
+            }
+         }
+         when combineComputeErrors( ComputeErrors &err) atomic {
+            err.completeErrors();
+            if (domain->domainID == 0) {
+               err.reportErrors();
+            }
+            interfaceProxy.doneCheck( );
+         }
+      };
+      
+      
+      
+   } // SimulationCHARM
+
+
+   initproc void register_reduce_CheckError();
+     
+};
+   

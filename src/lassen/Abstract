@@ -1,0 +1,74 @@
+Software Review and Release Abstract
+
+1a. Software Acronym
+
+  LASSEN
+
+1b. Short Title
+
+  LASSEN - A Wave Propagation Mini-App
+
+2. Author Names(s) and Affiliations:
+
+  Brian McCandless (LLNL-WCI)
+
+3. Software Completion Date:
+
+  07/01/2013
+
+4. Brief Description:
+
+  LASSEN simulates the propagation of a wave through as it travels
+  around an unstructured mesh.  All the computational work is
+  concentrated at the wave front.  Therefore, this becomes a
+  challenging problem to effectively parallelize since the workload is
+  constantly changing.  In this software release three versions are
+  implemented: serial, MPI and Charm++.  LASSEN is used as a research
+  tool to explore parallelization strategies to provide improved
+  scalability.
+
+5. Method of Solution:
+
+  LASSEN represents the wave front with a linear approximation.  The
+  wave front is recomputed each time-step using a level-set method.
+
+6. Computer(s) for which software is written:
+
+  The software was developed on a Linux cluster.   It should be portable.
+
+7. Operating System:
+
+  Linux.  It should be portable to other operating systems.
+
+8. Programming Language(s) Used:
+
+  C++, Charm++.
+
+9. Software Limitations:
+
+  None. 
+  
+10. Unique Features of the Software:
+
+  LASSEN works on an unstructured mesh and has a 2D and 3D version.
+  It is written in a modular way such that new parallelization
+  strategies can be used with minimal impact to the existing code.
+
+11. Related and Auxiliary Software:
+
+  The software has dependencies on Charm++ and MPI.  It also
+  optionally uses The SILO library for file I/O.
+
+12. Other Programming or Operating Information or Restrictions:
+
+  No known restrictions.
+
+13. Hardware Requirements:
+
+  None.
+
+14. Time Requirements:
+
+  None.
+
+15. References:
