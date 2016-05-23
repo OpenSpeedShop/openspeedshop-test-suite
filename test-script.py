@@ -235,6 +235,7 @@ def raw_job_controller(env, tests):
 
     failed = []
     base_dir = os.getcwd()
+    os.environ['OMP_NUM_THREADS'] = '2'
     
     for t in tests: #loop through all tests
         if t['mpi_imp'] != '': #check if this an mpi test
