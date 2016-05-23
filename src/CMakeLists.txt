@@ -18,7 +18,7 @@
 
 # sequential only
 add_subdirectory(loopcheck)
-add_subdirectory(matmul)
+#add_subdirectory(matmul)
 add_subdirectory(threads)
 # openmp only
 add_subdirectory(openmp_stress)
@@ -31,7 +31,9 @@ add_subdirectory(IOR)
 add_subdirectory(lulesh)
 # hybrid(openmp/mpi) and mpi only
 add_subdirectory(stream)
+if(NOT BUILD_COMPILER_NAME MATCHES pgi)
 add_subdirectory(lulesh2.0.3)
+endif()
 
 
 
