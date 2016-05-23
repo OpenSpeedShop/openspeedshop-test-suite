@@ -6,7 +6,7 @@ static int f1(int x, int y)
 {
     int i, t = 0;
 
-    for(i = 0; i < 20000; i++)
+    for(i = 0; i < 200000; i++)
         t += x * y;
     return t;
 }
@@ -15,7 +15,7 @@ static int f2(int x, int y)
 {
     int i, t = 0;
 
-    for(i = 0; i < 40000; i++)
+    for(i = 0; i < 400000; i++)
         t += x * y;
     return t;
 }
@@ -24,7 +24,7 @@ static int f3(int x, int y)
 {
     int i, t = 0;
 
-    for(i = 0; i < 60000; i++)
+    for(i = 0; i < 600000; i++)
         t += x * y;
     return t;
 }
@@ -41,7 +41,7 @@ int work(int size)
  
 int main()
 {
-   int size = 400;
+   int size = 600;
 
     work(size);
 }
