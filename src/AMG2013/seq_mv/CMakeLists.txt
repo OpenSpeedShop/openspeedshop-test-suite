@@ -103,3 +103,68 @@ if(HAVE_OPENMPI)
 
 endif()
  
+
+if(HAVE_MPT)
+
+    if(OpenMP_FLAG_DETECTED)
+
+        # Hybrid OpenMP/MPI library section -------------------------------------------
+
+        add_library(seq_mv_mpt_hybrid STATIC
+            ${SEQ_MV_SOURCES}
+        )
+
+        target_include_directories(seq_mv_mpt_hybrid PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${OpenMP_INCLUDE_DIRS}
+            ${Mpt_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(seq_mv_mpt_hybrid
+            ${CMAKE_DL_LIBS}
+            ${Mpt_SHARED_LIBRARIES}
+            ${OPENMP_LIBS}
+            m
+        )
+
+        set_target_properties(seq_mv_mpt_hybrid PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+        set_target_properties(seq_mv_mpt_hybrid PROPERTIES OUTPUT_NAME "seq_mv_mpt_hybrid")
+
+        install(TARGETS seq_mv_mpt_hybrid ARCHIVE
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+    endif()
+
+    # MPI library only section -------------------------------------------
+
+    add_library(seq_mv_mpt_mpi STATIC
+        ${SEQ_MV_SOURCES}
+    )
+
+    target_include_directories(seq_mv_mpt_mpi PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(seq_mv_mpt_mpi
+        ${CMAKE_DL_LIBS}
+        ${Mpt_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(seq_mv_mpt_mpi PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+    set_target_properties(seq_mv_mpt_mpi PROPERTIES OUTPUT_NAME "seq_mv_mpt_mpi")
+
+    install(TARGETS seq_mv_mpt_mpi ARCHIVE
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+endif()
+ 

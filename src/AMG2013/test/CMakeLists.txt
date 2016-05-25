@@ -238,8 +238,6 @@ if(HAVE_MVAPICH2)
 
 endif()
 
-
-    
 if(HAVE_MPT)
 
     add_executable(mpi-amg2013-mpt
@@ -247,13 +245,30 @@ if(HAVE_MPT)
     )
 
     target_include_directories(mpi-amg2013-mpt PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/..
+	${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+    	${CMAKE_CURRENT_SOURCE_DIR}/../struct_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../sstruct_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../IJ_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../seq_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_ls
+	${CMAKE_CURRENT_SOURCE_DIR}/../krylov
+        ${CMAKE_CURRENT_BINARY_DIR}
 	${Mpt_INCLUDE_DIRS}
     )
 
     target_link_libraries(mpi-amg2013-mpt
 	${CMAKE_DL_LIBS}
+        ${CMAKE_CURRENT_BINARY_DIR}/../parcsr_ls/libparcsr_ls_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../parcsr_mv/libparcsr_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../IJ_mv/libIJ_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../seq_mv/libseq_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../struct_mv/libHYPRE_struct_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../sstruct_mv/libsstruct_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../krylov/libkrylov_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../utilities/libHYPRE_utilities_mpt_hybrid.a
 	${Mpt_SHARED_LIBRARIES}
 	m
     )
@@ -273,6 +288,15 @@ if(HAVE_MPT)
 
     target_include_directories(hybrid-amg2013-mpt PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/..
+	${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+    	${CMAKE_CURRENT_SOURCE_DIR}/../struct_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../sstruct_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../IJ_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../seq_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_mv
+	${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_ls
+	${CMAKE_CURRENT_SOURCE_DIR}/../krylov
         ${CMAKE_CURRENT_BINARY_DIR}
         ${OpenMP_INCLUDE_DIRS}
         ${Mpt_INCLUDE_DIRS}
@@ -280,6 +304,14 @@ if(HAVE_MPT)
 
     target_link_libraries(hybrid-amg2013-mpt
         ${CMAKE_DL_LIBS}
+        ${CMAKE_CURRENT_BINARY_DIR}/../parcsr_ls/libparcsr_ls_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../parcsr_mv/libparcsr_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../IJ_mv/libIJ_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../seq_mv/libseq_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../struct_mv/libHYPRE_struct_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../sstruct_mv/libsstruct_mv_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../krylov/libkrylov_mpt_hybrid.a
+        ${CMAKE_CURRENT_BINARY_DIR}/../utilities/libHYPRE_utilities_mpt_hybrid.a
         ${Mpt_SHARED_LIBRARIES}
         m
     )
@@ -290,7 +322,6 @@ if(HAVE_MPT)
     install(TARGETS hybrid-amg2013-mpt
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
     )
-
 
 endif()
  

@@ -113,3 +113,78 @@ if(HAVE_OPENMPI)
 
 endif()
  
+
+if(HAVE_MPT)
+
+    if(OpenMP_FLAG_DETECTED)
+
+        # Hybrid OpenMP/MPI library section -------------------------------------------
+
+        add_library(HYPRE_struct_mv_mpt_hybrid STATIC
+            ${STRUCT_MV_SOURCES}
+        )
+
+        target_include_directories(HYPRE_struct_mv_mpt_hybrid PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${OpenMP_INCLUDE_DIRS}
+            ${Mpt_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(HYPRE_struct_mv_mpt_hybrid
+            ${CMAKE_DL_LIBS}
+            ${Mpt_SHARED_LIBRARIES}
+            ${OPENMP_LIBS}
+            m
+        )
+
+        add_custom_command (
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_struct_mv_mpt_hybrid.a
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_struct_mv_openmpi_hybrid.a
+            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_struct_mv_mpt_hybrid.a
+            DEPENDS ${STRUCT_MV_SOURCES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        add_custom_target(runHYPRE_mpt_hybrid ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_struct_mv_mpt_hybrid.a)
+
+        set_target_properties(HYPRE_struct_mv_mpt_hybrid PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+        set_target_properties(HYPRE_struct_mv_mpt_hybrid PROPERTIES OUTPUT_NAME "HYPRE_struct_mv_mpt_hybrid")
+
+        install(TARGETS HYPRE_struct_mv_mpt_hybrid ARCHIVE
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+    endif()
+
+    # MPI library only section -------------------------------------------
+
+    add_library(HYPRE_struct_mv_mpt_mpi STATIC
+        ${STRUCT_MV_SOURCES}
+    )
+
+    target_include_directories(HYPRE_struct_mv_mpt_mpi PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(HYPRE_struct_mv_mpt_mpi
+        ${CMAKE_DL_LIBS}
+        ${Mpt_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(HYPRE_struct_mv_mpt_mpi PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+    set_target_properties(HYPRE_struct_mv_mpt_mpi PROPERTIES OUTPUT_NAME "HYPRE_struct_mv_mpt_mpi")
+
+    install(TARGETS HYPRE_struct_mv_mpt_mpi ARCHIVE
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+endif()
+ 
