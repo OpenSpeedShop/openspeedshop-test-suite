@@ -23,6 +23,8 @@ def test_obj(env, file_name):
 
     test = {}
     lst = file_name.split('-')
+    if len(lst) < 4:
+	return None
     test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
     test['name'] = lst[1]
     test['mpi_imp'] = lst[3] if len(lst) > 3 else ''
@@ -154,7 +156,7 @@ def run_tests(env, tests, is_baseline):
     elif job_cont == 'slurm':
         return raw_job_controller(env, tests)
     elif job_cont == 'pbs':
-        return raw_job_controller(env, tests)
+        return pbs_job_controller(env, tests)
     else:
         print 'invalid job controller type ' + job_cont
     os.chdir(base_dir)
@@ -499,7 +501,9 @@ def main(args=None, error_func=None):
     for root, dirs, files in os.walk(bd):
         for entry in files:
             if os.access(os.path.join(root,entry), os.X_OK): #check that file has x bit
-                tests.append(test_obj(env,entry))
+		t = test_obj(env,entry)
+		if t != None:
+                	tests.append(test_obj(env,entry))
     
     if args.clean_run:
         clean_tests(env, False)
