@@ -154,7 +154,7 @@ def run_tests(env, tests, is_baseline):
     elif job_cont == 'slurm':
         return raw_job_controller(env, tests)
     elif job_cont == 'pbs':
-        return raw_job_controller(env, tests)
+        return pbs_job_controller(env, tests)
     else:
         print 'invalid job controller type ' + job_cont
     os.chdir(base_dir)
@@ -187,48 +187,59 @@ def slurm_job_controller(env, tests):
     pass #need to implement
 
 def pbs_job_controller(env, tests):
-    '''
-    # Example PBS cluster job submission in Python
-     
-    from popen2 import popen2
-    import time
-     
-    # If you want to be emailed by the system, include these in job_string:
-    #PBS -M your_email@address
-    #PBS -m abe  # (a = abort, b = begin, e = end)
-     
-    # Loop over your jobs
-    for i in range(1, 10):
-     
-        # Open a pipe to the qsub command.
-        output, input = popen2('qsub')
-         
-        # Customize your options here
-        job_name = "my_job_%d" % i
-        walltime = "1:00:00"
-        processors = "nodes=1:ppn=1"
-        command = "./my_program -n %d" % i
-     
-        job_string = """#!/bin/bash
-        #PBS -N %s
-        #PBS -l walltime=%s
-        #PBS -l %s
-        #PBS -o ./output/%s.out
-        #PBS -e ./error/%s.err
-        cd $PBS_O_WORKDIR
-        %s""" % (job_name, walltime, processors, job_name, job_name, command)
-         
-        # Send job_string to qsub
-        input.write(job_string)
-        input.close()
-         
-        # Print your job and the system response to the screen as it's submitted
-        print job_string
-        print output.read()
-         
-        time.sleep(0.1)
-    '''
-    pass
+
+# If running mpi or pcsamp experiments this helps OpenSpeedShop know
+# what MPI implementation is being analysed.  Needed to know
+# the layout and sizes of the MPI data structures 
+    os.environ['OPENSS_DEBUG_STARTUP'] = '1'
+    os.environ['OPENSS_MPI_IMPLEMENTATION'] = 'mpt'
+    os.environ['OMP_NUM_THREADS'] = '2'
+
+    for t in tests: #loop through all tests
+        if t['mpi_imp'] != '': #check if this an mpi test
+            for mpi in  env['mpi_drivers']: #loop through mpi_commands
+                if t['name'] == 'sweep3d': #need to move input file
+                    input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
+                    shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
+
+                for c in t['collectors']: #loop through all collectors to run
+                    #run each collector on the test program
+                    #also build the mpirun command
+                    oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + '\"\n'
+
+                    jobscript = \
+        '#PBS -S /bin/csh\n\
+#  PBS script file\n\
+#   submit this script using the command:\n\
+#       qsub run.pbs\n\
+\n\
+#PBS -l ncpus=16,nodes=2\n\
+#PBS -N ' + c + '-' + t['name'] + '\n' + \
+'#PBS -l walltime=0:05:00\n\
+#PBS -l mem=1000mb\n\
+#PBS -j oe\n\
+#PBS -m bea\n\
+#PBS -q debug\n\
+\n\
+# run case\n\
+' + \
+oss_cmd + \
+'echo " "\n\
+echo "finished run"\n\
+echo " "\n\
+echo " =========================="\n\
+'
+        file = open('temp_pbs_run.sh', 'w')
+        file.write(jobscript)
+        file.close()
+        print 'made job script'
+        pbs_cmd = ['qsub', 'temp_pbs_run.sh']
+    #    p = Popen(pbs_cmd)
+    #    p.wait()
+
+
+
+
 
 def raw_job_controller(env, tests):
     """ dispatch jobs as you would on your laptop or pc"""
