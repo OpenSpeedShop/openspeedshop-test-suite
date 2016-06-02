@@ -102,8 +102,10 @@ def create_env(filename):
         'job_controller':'raw',
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
+	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
         'openmpi_root':'/opt/openmpi-1.10.2',
         'ompt_root':'/opt/ompt_v2.2.2',
+	'input_dir':'input_files',
         'compilers':['gnu'] }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
@@ -138,6 +140,7 @@ def run_tests(env, tests, is_baseline):
     """run a list of tests, store the data by data and is_baseline"""
 
     base_dir = os.getcwd()
+    input_dir = os.path.join(base_dir,env['input_dir'])
     mk_cd(env['test_data_dir'])
     mk_cd(env['oss_version'])
     if is_baseline:
@@ -147,6 +150,12 @@ def run_tests(env, tests, is_baseline):
     folder = str(datetime.now())
     folder = folder.split()[0] + '_' + folder.split()[1]
     mk_cd(folder)
+
+    #copy the 3 input files needed to the cwd
+    for f in ['input', 'matmul_input.txt', 'stress.input']:
+	input_dir = os.path.join(base_dir, env['input_dir'])
+        input_file = os.path.join(input_dir, f)
+        shutil.copyfile(input_file, os.path.join(os.getcwd(), f))
 
     job_cont = env['job_controller']
     if job_cont == 'raw':	
@@ -175,7 +184,7 @@ def moab_job_controller(env, tests):
          
         os.chdir(os.getenv('PBS_O_WORKDIR', '/home/username/your_project_name'))
         os.environ['IPATH_NO_CPUAFFINITY'] = '1'
-        os.environ['OMP_NUM_THREADS'] = '12'
+        os.environ['OMP_NUM_THREADS'] = '2'
          
         subprocess.call("mpiexec -n 4 -npernode 1 ./yourcode > results.txt", shell=True)
          
@@ -190,39 +199,45 @@ def slurm_job_controller(env, tests):
 
 def pbs_job_controller(env, tests):
 
-# If running mpi or pcsamp experiments this helps OpenSpeedShop know
-# what MPI implementation is being analysed.  Needed to know
-# the layout and sizes of the MPI data structures 
-    os.environ['OPENSS_DEBUG_STARTUP'] = '1'
-    os.environ['OPENSS_MPI_IMPLEMENTATION'] = 'mpt'
-    os.environ['OMP_NUM_THREADS'] = '2'
-
     for t in tests: #loop through all tests
-        if t['mpi_imp'] != '': #check if this an mpi test
-            for mpi in  env['mpi_drivers']: #loop through mpi_commands
-                if t['name'] == 'sweep3d': #need to move input file
-                    input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
-                    shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
+	
+	#locate any input files that need to be piped for specific tests
+	input_pipe = ''
+	if t['name'] == 'matmul':
+	    input_pipe = ' < matmul_input.txt'
+	elif t['name'] == 'openmp_stress':
+	    input_pipe = ' < stress.input'
 
-                for c in t['collectors']: #loop through all collectors to run
-                    #run each collector on the test program
-                    #also build the mpirun command
-                    oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + '\"\n'
-
-                    jobscript = \
+	string1 = \
         '#PBS -S /bin/csh\n\
 #  PBS script file\n\
 #   submit this script using the command:\n\
 #       qsub run.pbs\n\
 \n\
 #PBS -l ncpus=16,nodes=2\n\
-#PBS -N ' + c + '-' + t['name'] + '\n' + \
+#PBS -N test-suite-' + t['name'] + '\n' + \
 '#PBS -l walltime=0:05:00\n\
 #PBS -l mem=1000mb\n\
 #PBS -j oe\n\
 #PBS -m bea\n\
 #PBS -q debug\n\
 \n\
+setenv OPENSS_DEBUG_STARTUP 1\n\
+setenv OMP_NUM_THREADS 2\n'
+	
+        if t['mpi_imp'] != '': #check if this an mpi test
+
+            for mpi in  env['mpi_drivers']: #loop through mpi_commands
+                for c in t['collectors']: #loop through all collectors to run
+                    #run each collector on the test program
+                    #also build the mpirun command
+		#TODO check for sequential jobs and remove mpiexec call
+		#also TODO pipe input files on select tests
+                    oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + input_pipe + '\"\n'
+
+                    jobscript = string1 + \
+'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
+module load modules ' + env['openss_module'] + '\n\
 # run case\n\
 ' + \
 oss_cmd + \
@@ -231,14 +246,35 @@ echo "finished run"\n\
 echo " "\n\
 echo " =========================="\n\
 '
-        file = open('temp_pbs_run.sh', 'w')
-        file.write(jobscript)
-        file.close()
-        print 'made job script'
-        pbs_cmd = ['qsub', 'temp_pbs_run.sh']
-    #    p = Popen(pbs_cmd)
-    #    p.wait()
-
+		    file = open('temp_pbs_run.sh', 'w')
+		    file.write(jobscript)
+		    file.close()
+		    print 'made job script'
+		    pbs_cmd = ['qsub', 'temp_pbs_run.sh']
+		    p = Popen(pbs_cmd)
+		    p.wait()
+	else: #not an mpi test
+	    for c in t['collectors']:	
+                oss_cmd = 'oss' + c + ' \"' + t['exe'] + input_pipe + '\"\n'
+	        jobscript = string1 + \
+'module load modules ' + env['openss_module'] + '\n\
+# run case\n\
+' + \
+oss_cmd + \
+'echo " "\n\
+echo "finished run"\n\
+echo " "\n\
+echo " =========================="\n\
+'
+		file = open('temp_pbs_run.sh', 'w')
+		file.write(jobscript)
+		file.close()
+		print 'made job script'
+		pbs_cmd = ['qsub', 'temp_pbs_run.sh']
+		p = Popen(pbs_cmd)
+		p.wait()
+    os.remove('temp_pbs_run.sh')
+	
 
 
 
@@ -253,10 +289,6 @@ def raw_job_controller(env, tests):
     for t in tests: #loop through all tests
         if t['mpi_imp'] != '': #check if this an mpi test
             for mpi in  env['mpi_drivers']: #loop through mpi_commands
-                if t['name'] == 'sweep3d': #need to move input file
-                    input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
-                    shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
-
                 for c in t['collectors']: #loop through all collectors to run
                     #run each collector on the test program
                     #also build the mpirun command
@@ -334,6 +366,8 @@ def compare_tests(env, tests, args):
     big_log = [] #log of all tests
     variance = env['acceptable_variance']  #allowed variance in percent
 
+    #TODO. instead of searching for test objects, search by  db files
+
     for t in tests:
         x = t['exe']
         for c in t['collectors']:
@@ -346,15 +380,17 @@ def compare_tests(env, tests, args):
             results = os.path.join(results_dir, results_file)
 
             if not os.path.isfile(baseline):
-                err = 'failed to locate baseline file ' + baseline
-                #print err
-                failed.append(err)
-                continue
+		baseline = str(baseline)[:-7] + '-0.openss' #some oss versions append a -0 to the file names
+		if not os.path.isfile(baseline):
+                    err = 'failed to locate baseline file ' + baseline
+                    failed.append(err)
+                    continue
             if not os.path.isfile(results):
-                err = 'failed to locate results file ' + results
-                #print err
-                failed.append(err)
-                continue
+		results = str(results)[:-7] + '-0.openss' #some oss versions append a -0 to the file names
+                if not os.path.isfile(results):
+                    err = 'failed to locate results file ' + results
+                    failed.append(err)
+                    continue
 
             compare_metric = 'percent'
             if c in ['mem', 'mpi', 'io', 'iot', 'pthreads', 'mpit']:
@@ -400,7 +436,7 @@ def compare_tests(env, tests, args):
             big_log.append(log)
             #compare_file = get_comp_file_name(cmd)
             if p.returncode != 0:
-                err = 'osscompare failed: ' + cmd[0] + ' ' + cmd[1] + ' ' + cmd[2]
+                err = 'osscompare failed: ' + cmd
                 print err
                 failed.append(err)
                 try: os.rm(compare_file)

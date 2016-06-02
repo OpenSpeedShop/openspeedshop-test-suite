@@ -42,10 +42,15 @@ mpi_drivers - list of commands you us to run mpi applications, include argments
 
 src_dir - directory containing the source for the tests
 test_data_dir - directory to store the test data
+input_dir - directory with input files for the tests that require them.
 oss_version - the current version of openss. This needs to be manually specified until oss has a --version option
 acceptable_variance - floating point value in percent. maximum factor by which baseline and results values can differ and still be allowed to pass
 openmpi_root : root directory of openmpi installation
 ompt_root : root directory of of ompt installation for libiomp, only used with intel compiler
+openss_module : location of the openss module file. this is required when using a job controller only. in all cases the module must be manually loaded before execution of the script as of now.
+
+the following options will generally need to be modified before the first run:
+mpi_drivers, compilers, oss_version, openmpi_root (if using openmpi), ompt_root(if using ompt), openss_module (if using a job controller)
 
 2)
 build the tests with the command
