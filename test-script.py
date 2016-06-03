@@ -103,6 +103,7 @@ def create_env(filename):
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
 	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
+	'mpi_module':'mpi-sgi/mpt.2.12r26 comp-intel/2016.2.181',
         'openmpi_root':'/opt/openmpi-1.10.2',
         'ompt_root':'/opt/ompt_v2.2.2',
 	'input_dir':'input_files',
@@ -216,7 +217,7 @@ def pbs_job_controller(env, tests):
 \n\
 #PBS -l ncpus=16,nodes=2\n\
 #PBS -N test-suite-' + t['name'] + '\n' + \
-'#PBS -l walltime=0:05:00\n\
+'#PBS -l walltime=0:10:00\n\
 #PBS -l mem=1000mb\n\
 #PBS -j oe\n\
 #PBS -m bea\n\
@@ -238,6 +239,7 @@ setenv OMP_NUM_THREADS 2\n'
                     jobscript = string1 + \
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
 module load modules ' + env['openss_module'] + '\n\
+module load modules ' + env['mpi_module'] + '\n\
 # run case\n\
 ' + \
 oss_cmd + \
@@ -246,11 +248,11 @@ echo "finished run"\n\
 echo " "\n\
 echo " =========================="\n\
 '
-		    file = open('temp_pbs_run.sh', 'w')
+		    file = open('temp_pbs_run.pbs', 'w')
 		    file.write(jobscript)
 		    file.close()
 		    print 'made job script'
-		    pbs_cmd = ['qsub', 'temp_pbs_run.sh']
+		    pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
 		    p = Popen(pbs_cmd)
 		    p.wait()
 	else: #not an mpi test
@@ -266,14 +268,14 @@ echo "finished run"\n\
 echo " "\n\
 echo " =========================="\n\
 '
-		file = open('temp_pbs_run.sh', 'w')
+		file = open('temp_pbs_run.pbs', 'w')
 		file.write(jobscript)
 		file.close()
 		print 'made job script'
-		pbs_cmd = ['qsub', 'temp_pbs_run.sh']
+		pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
 		p = Popen(pbs_cmd)
 		p.wait()
-    os.remove('temp_pbs_run.sh')
+    os.remove('temp_pbs_run.pbs')
 	
 
 
@@ -367,42 +369,28 @@ def compare_tests(env, tests, args):
     variance = env['acceptable_variance']  #allowed variance in percent
 
     #TODO. instead of searching for test objects, search by  db files
+    pattern = re.compile(r'.*\.openss$', re.M|re.I)
 
-    for t in tests:
-        x = t['exe']
-        for c in t['collectors']:
-            print '_________________________________________'
-            print 'running test ' + x
-            baseline_file = get_db_name(['oss'+c,x])
-            baseline = os.path.join(baseline_dir, baseline_file)
-
-            results_file = get_db_name(['oss'+c,x])
-            results = os.path.join(results_dir, results_file)
-
-            if not os.path.isfile(baseline):
-		baseline = str(baseline)[:-7] + '-0.openss' #some oss versions append a -0 to the file names
-		if not os.path.isfile(baseline):
-                    err = 'failed to locate baseline file ' + baseline
-                    failed.append(err)
-                    continue
-            if not os.path.isfile(results):
-		results = str(results)[:-7] + '-0.openss' #some oss versions append a -0 to the file names
-                if not os.path.isfile(results):
-                    err = 'failed to locate results file ' + results
-                    failed.append(err)
-                    continue
+    for root, dirs, files in os.walk(baseline_dir):
+	for f in files:
+	    if not pattern.match(str(f)):
+		continue
+	    results_file = os.path.join(results_dir, f)
+	    baseline_file = os.path.join(baseline_dir, f)
 
             compare_metric = 'percent'
+	    '''
             if c in ['mem', 'mpi', 'io', 'iot', 'pthreads', 'mpit']:
                 compare_metric = 'counts'
             elif c == 'hwsamp':
                 compare_metric = 'allEvents'
+	    '''
 
             #move results and baseline files to a temp dir
             #cd, run, cd, rm
             mk_cd('temp')
-            shutil.copyfile('../' + baseline, './baseline')
-            shutil.copyfile('../' + results, './results')
+            shutil.copyfile('../' + baseline_file, './baseline')
+            shutil.copyfile('../' + results_file, './results')
 
             cmd = 'osscompare \"baseline,results\" percent'
             #print str(cmd)
@@ -411,7 +399,7 @@ def compare_tests(env, tests, args):
             output = p.stdout.read()
             matches = re.finditer(r'^(\s*)(\d*\.\d*)(\s*)(\d*\.\d*)(\s+)([_\w]+)',output, re.M|re.I)
             log = "------------------------------------------------------\n"
-            log += 'compare for ' + c + ' on ' + x + ':\n\n'
+            #log += 'compare for ' + c + ' on ' + x + ':\n\n'
             all_passed = True
 
             os.chdir('..')
@@ -429,7 +417,7 @@ def compare_tests(env, tests, args):
                     all_passed = False
             if all_passed:
                 log += 'all function values are within acceptable variance\n'
-                succeeded.append('test ' + c + ' on ' + x + ' passed all tests')
+                #succeeded.append('test ' + c + ' on ' + x + ' passed all tests')
             else:
                 failed.append('test ' + c + ' on ' + x + ' failed a variance test')
             log += "------------------------------------------------------\n"
@@ -437,6 +425,7 @@ def compare_tests(env, tests, args):
             #compare_file = get_comp_file_name(cmd)
             if p.returncode != 0:
                 err = 'osscompare failed: ' + cmd
+		err += '\n\t on files: ' + baseline_file + ', ' + results_file
                 print err
                 failed.append(err)
                 try: os.rm(compare_file)

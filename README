@@ -48,9 +48,10 @@ acceptable_variance - floating point value in percent. maximum factor by which b
 openmpi_root : root directory of openmpi installation
 ompt_root : root directory of of ompt installation for libiomp, only used with intel compiler
 openss_module : location of the openss module file. this is required when using a job controller only. in all cases the module must be manually loaded before execution of the script as of now.
+mpi_module : location of the mpi (openmpi, mpt, etc) module file. this is required when using a job controller only. in all cases the module must be manually loaded before execution of the script as of now.
 
 the following options will generally need to be modified before the first run:
-mpi_drivers, compilers, oss_version, openmpi_root (if using openmpi), ompt_root(if using ompt), openss_module (if using a job controller)
+mpi_drivers, compilers, oss_version, openmpi_root (if using openmpi), ompt_root(if using ompt), openss_module, mpi_module, (module options need to be specified if using a job controller, but can be manually loaded beforehand when not)
 
 2)
 build the tests with the command
