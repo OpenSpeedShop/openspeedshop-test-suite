@@ -1,0 +1,18 @@
+TO:       Information Management (IM), L-662
+FROM:     Brian McCandless
+SUBJECT:  Memorandum of Record
+ 
+The Lassen software is a project that is funded by the Advanced
+Architecture Software Development (AASD) Project in ASC.  The purpose
+of this software package is to experiment with load balancing and
+parallelization strategies for a wave propagation algorithm.  In this
+work three versions are implemented: serial, MPI and Charm++.  MPI is
+the standard Message Passing Interface version, and Charm++ is a
+parallel language and run-time system designed to work well with
+irregular scientific applications. 
+
+The information being distributing is about 5000 lines of C++ and
+Charm++ source code that can be compiled to run a simple problem
+setups (in 2D and 3D), such as propagating a wave starting at one
+corner of a box.
+

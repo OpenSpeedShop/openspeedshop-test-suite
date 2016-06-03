@@ -1,0 +1,9 @@
+
+mainmodule SimulationCHARMMain {
+
+   mainchare main {
+      entry main( CkArgMsg *);
+   }
+
+}
+

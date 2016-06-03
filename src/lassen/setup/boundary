@@ -1,0 +1,6 @@
+size x 1.0 y 1.0 z 1.0
+defvel 1.0
+
+box vel 0.0     x1 0.10  x2 0.90    y1 0.10  y2 0.90    z1 0.00 z2 1.00
+
+source delay 0.0  x 0.0   y 0.5  z 0.0
