@@ -16,8 +16,9 @@ export LIBIOMP_ROOT=/p/home/galarowi/OSS/krellroot_v2.2.3
 cmake .. \
        -DCMAKE_INSTALL_PREFIX=/p/home/galarowi/application_test_demos \
        -DCMAKE_BUILD_TYPE=None \
-       -DCMAKE_CXX_FLAGS="-g -O2" \
-       -DCMAKE_C_FLAGS="-g -O2" \
+       -DCMAKE_CXX_FLAGS="-g -O2 -dynamic" \
+       -DCMAKE_C_FLAGS="-g -O2 -dynamic" \
+       -DCMAKE_Fortran_FLAGS="-g -O2 -dynamic" \
        -DCMAKE_C_COMPILER="cc" \
        -DCMAKE_CXX_COMPILER="CC" \
        -DCMAKE_Fortran_COMPILER="ftn" \
