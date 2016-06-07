@@ -76,7 +76,7 @@ def build_tests(env):
     if 'intel' in env['compilers']:
         intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
             ('-DCMAKE_C_COMPILER', 'icc'),
-            ('-LIBIOMP_DIR', env['ompt_root']),
+            ('-DLIBIOMP_DIR', env['ompt_root']),
             ('-DBUILD_COMPILER_NAME', 'intel')]
         run_cmake('intel_build', cmake_flags + intel_flags)
     
