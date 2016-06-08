@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 import re, json, os, subprocess, argparse, sys, shutil
 from subprocess import Popen, PIPE
 from datetime import datetime
@@ -6,6 +6,8 @@ from datetime import datetime
 """Open Speed Shop Test Script
 by Patrick Romero 4/11/16
 contact snixromero@gmail.com for questions"""
+
+module = None #need to be global
 
 ##### naming utility functions #####
 def get_db_name(cmd):
@@ -70,23 +72,29 @@ def build_tests(env):
     cmake_flags = [('-DCMAKE_INSTALL_PREFIX', '..'),
         ('-DCMAKE_BUILD_TYPE', 'None'),
         ('-DCMAKE_CXX_FLAGS', '-g -O2'),
-        ('-DCMAKE_C_FLAGS', '-g -O2'),
-        ('-DOPENMPI_DIR', env['openmpi_root'])]
+        ('-DCMAKE_C_FLAGS', '-g -O2')]
+        #('-DOPENMPI_DIR', env['openmpi_root'])]
 
-    if 'intel' in env['compilers']:
-        intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
-            ('-DCMAKE_C_COMPILER', 'icc'),
-            ('-DLIBIOMP_DIR', env['ompt_root']),
-            ('-DBUILD_COMPILER_NAME', 'intel')]
-        run_cmake('intel_build', cmake_flags + intel_flags)
-    
-    if 'pgi' in env['compilers']:
-        pgi_flags = [('-DBUILD_COMPILER_NAME', 'pgi')]
-        run_cmake('pgi_build', cmake_flags + pgi_flags)
-    
-    if 'gnu' in env['compilers']:
-        gnu_flags = [('-DBUILD_COMPILER_NAME', 'gnu')]
-        run_cmake('gnu_build', cmake_flags + gnu_flags)
+    for profile in env['profiles']:
+	#TODO purge and load modules
+	module('purge')
+	module('load', profile['cc_module'])
+	module('load', profile['mpi_module'])
+        profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
+	if 'intel' == profile['cc']:
+	    intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
+		('-DCMAKE_C_COMPILER', 'icc'),
+		('-DLIBIOMP_DIR', env['ompt_root']),
+		('-DBUILD_COMPILER_NAME', 'intel')]
+	    run_cmake('intel_build', cmake_flags + profile_flags + intel_flags)
+	    
+	if 'pgi' == profile['cc']:
+	    pgi_flags = [('-DBUILD_COMPILER_NAME', 'pgi')]
+	    run_cmake('pgi_build', cmake_flags + profile_flags + pgi_flags)
+	    
+	if 'gnu' == profile['cc']:
+            gnu_flags = [('-DBUILD_COMPILER_NAME', 'gnu')]
+            run_cmake('gnu_build', cmake_flags + profile_flags + gnu_flags)
 
 ################################################
 ### the functions create_env and create_profiles create some default settings
@@ -105,7 +113,7 @@ def create_env(filename):
         'src_dir':'src',
         'dynamic_cbtf':False,
         'oss_version': 'oss_offline-2.2.2',
-	'ompt_root':''
+	'ompt_root':'/nobackupnfs2/jgalarow/krellroot_v2.2.6',
         'job_controller':'raw',
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
@@ -123,7 +131,7 @@ def create_profiles(filename):
     print "please edit this to have correct values"
 
     profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_module':'mpi-intel/5.0.3.048',
-	'mpi_cmake_flag':'OPENMPI_DIR', 'cmake_flag_var':'I_MPI_ROOT'} ]
+	'mpi_cmake_flag':'-DOPENMPI_DIR', 'cmake_flag_var':'I_MPI_ROOT'} ]
     pfile = open(filename,'w')
     pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
     pfile.close()
@@ -544,6 +552,26 @@ def main(args=None, error_func=None):
     parser.add_argument('--clean-all', action='store_true' , help='clean run and baseline data')
 
     args = parser.parse_args(sys.argv[1:] if args is None else args)
+
+    ####################### Look for module init file #############
+    if not os.environ.has_key('MODULESHOME'): raise EnvironmentError('Environment variable "MODULESHOME" not found')
+
+    # Search for these paths within the MODULESHOME directory (in this order)
+    search_paths = ['init/python',
+	'init/python.py',]
+
+    # Stop at first path that exists
+    for sp in search_paths:
+	init_py = os.path.join( os.environ['MODULESHOME'], sp )
+	if os.path.exists(init_py): break
+
+    if not os.path.exists(init_py): raise IOError("EnvironmentModules python script was not found")
+
+    # Execute the file
+    glo = {}
+    execfile(init_py, glo)
+    global module
+    module = glo['module']
 
     ####################### BEGIN MAIN #####################
     install_dir = os.path.dirname(os.path.abspath(__file__)) #get install location
