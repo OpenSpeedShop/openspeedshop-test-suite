@@ -88,6 +88,12 @@ def build_tests(env):
         gnu_flags = [('-DBUILD_COMPILER_NAME', 'gnu')]
         run_cmake('gnu_build', cmake_flags + gnu_flags)
 
+################################################
+### the functions create_env and create_profiles create some default settings
+## that will generally need to be modified.
+## env contains information about the system, and
+## profiles contains the compiler/mpi schemes that will be used to compile the tests
+
 def create_env(filename):
     """create the default environment file"""
 
@@ -103,17 +109,43 @@ def create_env(filename):
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
 	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
-	'mpi_module':'mpi-sgi/mpt.2.12r26 comp-intel/2016.2.181',
-        'openmpi_root':'/opt/openmpi-1.10.2',
-        'ompt_root':'/opt/ompt_v2.2.2',
 	'input_dir':'input_files',
         'compilers':['gnu'] }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
     envfile.close()
 
+def create_profiles(filename):
+    """create the default profiles.jsonn file"""
+
+    print "generated default environment file profiles.json"
+    print "please edit this to have correct values"
+
+    profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_module':'mpi-intel/5.0.3.048',
+	'mpi_cmake_flag':'OPENMPI_DIR', 'cmake_flag_var':'I_MPI_ROOT'} ]
+    pfile = open(filename,'w')
+    pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
+    pfile.close()
+
+def read_profiles(filename):
+    '''Read in profiles information from env.json'''
+
+    try:
+	envfile = open(filename,'r')
+    except:
+        print "profiles file not found, please create one using --create-prof"
+        print "then edit this file (profiles.json) to have correct values"
+        print "exiting..."
+        exit()
+		
+    env = json.load(envfile)
+    envfile.close()
+    return env
+
+   
+
 def read_env(filename):
-    """Read in environment information from env.json"""
+    '''Read in environment information from env.json'''
 
     try:
 	envfile = open(filename,'r')
@@ -138,7 +170,7 @@ def mk_cd(d):
     os.chdir(d)
 
 def run_tests(env, tests, is_baseline):
-    """run a list of tests, store the data by data and is_baseline"""
+    '''run a list of tests, store the data by data and is_baseline'''
 
     base_dir = os.getcwd()
     input_dir = os.path.join(base_dir,env['input_dir'])
@@ -282,7 +314,7 @@ echo " =========================="\n\
 
 
 def raw_job_controller(env, tests):
-    """ dispatch jobs as you would on your laptop or pc"""
+    ''' dispatch jobs as you would on your laptop or pc'''
 
     failed = []
     base_dir = os.getcwd()
@@ -337,7 +369,7 @@ def raw_job_controller(env, tests):
                     print t['name']
 
 def compare_tests(env, tests, args):
-    """compare the results of a list of tests, summarize"""
+    '''compare the results of a list of tests, summarize'''
 
     base_dir = os.getcwd()
     try:
@@ -481,9 +513,13 @@ def main(args=None, error_func=None):
 
     parser.add_argument('-e', nargs='?', 
         help='use an alternate env file (default=$INSTALL/env.json)')
+    parser.add_argument('-p', nargs='?', 
+        help='use an alternate profiles file (default=$INSTALL/profiles.json)')
 
     parser.add_argument('--create-env', nargs='?', const='env.json',
         metavar='ENV_FILE', help='create a default environment file (default=env.json)')
+    parser.add_argument('--create-prof', nargs='?', const='profiles.json',
+        metavar='ENV_FILE', help='create a default profiles file (default=profiles.json)')
 
     parser.add_argument('--create-baseline', action='store_true',
         help='create baseline for all tests')
@@ -517,6 +553,11 @@ def main(args=None, error_func=None):
         envfile = args.create_env
         exit(0)
 
+    if args.create_prof:
+        create_profiles(args.create_prof)
+        p_file = args.create_prof
+        exit(0)
+
     if args.e:
         envfile = args.e
         #read in the environment data. eventually this should be autoconfigured
@@ -526,7 +567,18 @@ def main(args=None, error_func=None):
         os.chdir(install_dir)
         env = read_env('env.json')
 
+    if args.p:
+        pfile = args.p
+        #read in the profiles data. eventually this should be autoconfigured
+        prof = read_env(pfile)
+        os.chdir(install_dir)
+    else:
+        os.chdir(install_dir)
+        prof = read_env('profiles.json')
+
+
     env['install_dir'] = install_dir #used to build absolute paths
+    env['profiles'] = prof #used mostly for building
 
     if args.build_tests:
         build_tests(env)
