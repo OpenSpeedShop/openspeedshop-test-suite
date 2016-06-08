@@ -105,6 +105,7 @@ def create_env(filename):
         'src_dir':'src',
         'dynamic_cbtf':False,
         'oss_version': 'oss_offline-2.2.2',
+	'ompt_root':''
         'job_controller':'raw',
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
