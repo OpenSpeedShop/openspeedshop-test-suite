@@ -82,7 +82,8 @@ def build_tests(env):
     for profile in env['profiles']:
 	#TODO purge and load modules
 	module('purge')
-	module('load', 'math-libs/2015Q1')
+	for m in profile['other_modules']:
+	    module('load', m)
 	module('load', profile['cc_module'])
 	module('load', profile['mpi_module'])
         profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
@@ -136,8 +137,8 @@ def create_profiles(filename):
     print "please edit this to have correct values"
 
     profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_imp':'openmpi',
-	'mpi_module':'mpi-intel/5.0.3.048',
-	'mpi_cmake_flag':'-DOPENMPI_DIR', 'cmake_flag_var':'I_MPI_ROOT'} ]
+	'mpi_module':'mpi-intel/5.0.3.048', 'mpi_cmake_flag':'-DOPENMPI_DIR',
+	'cmake_flag_var':'I_MPI_ROOT', 'other_modules':'math/intel_mkl_default'} ]
     pfile = open(filename,'w')
     pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
     pfile.close()
