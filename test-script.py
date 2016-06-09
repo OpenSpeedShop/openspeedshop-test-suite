@@ -30,6 +30,10 @@ def test_obj(env, file_name):
     test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
     test['name'] = lst[1]
     test['mpi_imp'] = lst[3] if len(lst) > 3 else ''
+    test['mpi_module'] =  ''
+    for p in env['profiles']:
+	if p['mpi_imp'] == test['mpi_imp']:
+	    test['mpi_module'] = p['mpi_module']
     test['compiler'] = lst[-1]
     #determine appropriate collectors, according to the old test-tool.sh
     coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime']
@@ -78,6 +82,7 @@ def build_tests(env):
     for profile in env['profiles']:
 	#TODO purge and load modules
 	module('purge')
+	module('load', 'math-libs/2015Q1')
 	module('load', profile['cc_module'])
 	module('load', profile['mpi_module'])
         profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
@@ -130,7 +135,8 @@ def create_profiles(filename):
     print "generated default environment file profiles.json"
     print "please edit this to have correct values"
 
-    profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_module':'mpi-intel/5.0.3.048',
+    profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_imp':'openmpi',
+	'mpi_module':'mpi-intel/5.0.3.048',
 	'mpi_cmake_flag':'-DOPENMPI_DIR', 'cmake_flag_var':'I_MPI_ROOT'} ]
     pfile = open(filename,'w')
     pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
@@ -280,7 +286,7 @@ setenv OMP_NUM_THREADS 2\n'
                     jobscript = string1 + \
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
 module load modules ' + env['openss_module'] + '\n\
-module load modules ' + env['mpi_module'] + '\n\
+module load modules ' + t['mpi_module'] + '\n\
 # run case\n\
 ' + \
 oss_cmd + \
