@@ -86,7 +86,7 @@ def build_tests(env):
 	    module('load', m)
 	module('load', profile['cc_module'])
 	module('load', profile['mpi_module'])
-        profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
+        profile_flags = [(profile['mpi_cmake_flag'],os.environ[profile['cmake_flag_var']])]
 	if 'intel' == profile['cc']:
 	    intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
 		('-DCMAKE_C_COMPILER', 'icc'),
@@ -124,8 +124,7 @@ def create_env(filename):
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
 	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
-	'input_dir':'input_files',
-        'compilers':['gnu'] }
+	'input_dir':'input_files' }
     envfile = open(filename,'w')
     envfile.write(json.dumps(env,sort_keys=True, indent=2, separators=(',', ': ')))
     envfile.close()
@@ -136,9 +135,14 @@ def create_profiles(filename):
     print "generated default environment file profiles.json"
     print "please edit this to have correct values"
 
-    profiles = [ { 'cc_module':'comp-intel/2016.2.181', 'cc':'intel', 'mpi_imp':'openmpi',
-	'mpi_module':'mpi-intel/5.0.3.048', 'mpi_cmake_flag':'-DOPENMPI_DIR',
-	'cmake_flag_var':'I_MPI_ROOT', 'other_modules':'math/intel_mkl_default'} ]
+    profiles = [{ "cc": "intel",
+	"mpi_imp": "openmp",
+	"cc_module": "comp-intel/2016.2.181",
+	"mpi_module": "mpi-sgi/mpt.2.12r26",
+	"cmake_flag_var": "MPI_ROOT",
+	"mpi_cmake_flag": "-DMPT_DIR",
+	"other_modules":["math/intel_mkl_default"]}]
+
     pfile = open(filename,'w')
     pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
     pfile.close()

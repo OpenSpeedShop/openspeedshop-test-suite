@@ -25,7 +25,9 @@ sample workflow
 __________________________________________________________________________________
 
 1)
-create the environment file env.json with the command
+the test suite is configured via 2 files, the env.json and profiles.json. by default, the test suite looks for the files with these names in its install directory. you can manually specify other files using the -p for profiles and -e for environment flags.
+
+create the default environment file env.json with the commandj
 
 ./test-script.py --create-env
 
@@ -34,9 +36,6 @@ some defaults. Edit these to appropriate values before continuing.
 
 options are as follows:
 bin_dir - directory to store compiled tests in
-build_scripts_dir - directory containing the build scripts, this should probably not be changed
-compilers - the list of compilers to compile with. adding a compilers will call an additional build script.
-		e.g. 'compilers':['gnu','intel']    will set the active build scripts to run_build_gnu.sh and run_build_intel.sh
 mpi_drivers - list of commands you us to run mpi applications, include argments
 		e.g. 'mpi_drivers':['mpirun -np 2']
 
@@ -45,13 +44,28 @@ test_data_dir - directory to store the test data
 input_dir - directory with input files for the tests that require them.
 oss_version - the current version of openss. This needs to be manually specified until oss has a --version option
 acceptable_variance - floating point value in percent. maximum factor by which baseline and results values can differ and still be allowed to pass
-openmpi_root : root directory of openmpi installation
 ompt_root : root directory of of ompt installation for libiomp, only used with intel compiler
-openss_module : location of the openss module file. this is required when using a job controller only. in all cases the module must be manually loaded before execution of the script as of now.
-mpi_module : location of the mpi (openmpi, mpt, etc) module file. this is required when using a job controller only. in all cases the module must be manually loaded before execution of the script as of now.
+openss_module : location of the openss module file. this is required when using a job controller only.
 
 the following options will generally need to be modified before the first run:
-mpi_drivers, compilers, oss_version, openmpi_root (if using openmpi), ompt_root(if using ompt), openss_module, mpi_module, (module options need to be specified if using a job controller, but can be manually loaded beforehand when not)
+mpi_drivers, oss_version, ompt_root(only if using ompt), openss_module 
+
+_______________________
+create the profiles.json file. this contains information about how to build the tests on your system.
+
+./test-script.py --create-prof
+
+the default settings are to build using the intel compiler with sgi/mpt mpi implementation. these may need to be modified.
+this file is a list of build configurations. each configuration in a json object with the following properties
+
+cc - the compiler, options are intel, gnu, pgi
+mpi_imp - the name of the mpi implementations, openmp, openmpi, mpt etc
+cc_module - the module for the compiler
+mpi_module - the module for the mpi implementation
+mpi_cmake_flag - this variable tells cmake which type of mpi implementation you are using, options are, -DMPT_DIR, -DOPENMPIDIR (maybe others as well?)
+cmake_flag_var - the environment variable you wish the mpi_cmake_flag to be set to, usually something like MPI_ROOT or whatever is in your mpi module file
+other_modules - a list of additional modules you may need to use to compile
+
 
 2)
 build the tests with the command
@@ -62,8 +76,6 @@ this will call the build scripts in build_scripts_dir specifed by the compilers 
 
 3)
 create baselines for the various tests
-
-before doing this be sure to load the mpi and openss modules
 
 ./test-script.py --create-baseline
 
