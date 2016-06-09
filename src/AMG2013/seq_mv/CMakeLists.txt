@@ -65,6 +65,18 @@ if(HAVE_OPENMPI)
             m
         )
 
+        add_custom_command (
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            DEPENDS seq_mv_openmpi_hybrid
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+        #add_custom_target(runseq_mv_openmpi_hybrid ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a)
+        add_custom_target(runseq_mv_openmpi_hybrid ALL DEPENDS seq_mv_openmpi_hybrid)
+
         set_target_properties(seq_mv_openmpi_hybrid PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
         set_target_properties(seq_mv_openmpi_hybrid PROPERTIES OUTPUT_NAME "seq_mv_openmpi_hybrid")
 
@@ -94,10 +106,87 @@ if(HAVE_OPENMPI)
         m
     )
 
+    add_custom_command (
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        DEPENDS seq_mv_openmpi_mpi
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    #add_custom_target(runseq_mv_openmpi_mpi ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a)
+    add_custom_target(runseq_mv_openmpi_mpi ALL DEPENDS seq_mv_openmpi_mpi)
+
     set_target_properties(seq_mv_openmpi_mpi PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
     set_target_properties(seq_mv_openmpi_mpi PROPERTIES OUTPUT_NAME "seq_mv_openmpi_mpi")
 
     install(TARGETS seq_mv_openmpi_mpi ARCHIVE
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+endif()
+ 
+
+if(HAVE_MPT)
+
+    if(OpenMP_FLAG_DETECTED)
+
+        # Hybrid OpenMP/MPI library section -------------------------------------------
+
+        add_library(seq_mv_mpt_hybrid STATIC
+            ${SEQ_MV_SOURCES}
+        )
+
+        target_include_directories(seq_mv_mpt_hybrid PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${OpenMP_INCLUDE_DIRS}
+            ${Mpt_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(seq_mv_mpt_hybrid
+            ${CMAKE_DL_LIBS}
+            ${Mpt_SHARED_LIBRARIES}
+            ${OPENMP_LIBS}
+            m
+        )
+
+        set_target_properties(seq_mv_mpt_hybrid PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+        set_target_properties(seq_mv_mpt_hybrid PROPERTIES OUTPUT_NAME "seq_mv_mpt_hybrid")
+
+        install(TARGETS seq_mv_mpt_hybrid ARCHIVE
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+    endif()
+
+    # MPI library only section -------------------------------------------
+
+    add_library(seq_mv_mpt_mpi STATIC
+        ${SEQ_MV_SOURCES}
+    )
+
+    target_include_directories(seq_mv_mpt_mpi PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(seq_mv_mpt_mpi
+        ${CMAKE_DL_LIBS}
+        ${Mpt_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(seq_mv_mpt_mpi PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+    set_target_properties(seq_mv_mpt_mpi PROPERTIES OUTPUT_NAME "seq_mv_mpt_mpi")
+
+    install(TARGETS seq_mv_mpt_mpi ARCHIVE
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
     )
 

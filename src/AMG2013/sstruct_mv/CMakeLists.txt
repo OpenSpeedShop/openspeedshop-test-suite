@@ -70,6 +70,18 @@ if(HAVE_OPENMPI)
             m
         )
 
+        add_custom_command (
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_hybrid.a
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_hybrid.a
+            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_hybrid.a
+            DEPENDS sstruct_mv_openmpi_hybrid
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+        #add_custom_target(runsstruct_mv_openmpi_hybrid ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_hybrid.a)
+        add_custom_target(runsstruct_mv_openmpi_hybrid ALL DEPENDS sstruct_mv_openmpi_hybrid)
+
         set_target_properties(sstruct_mv_openmpi_hybrid PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
         set_target_properties(sstruct_mv_openmpi_hybrid PROPERTIES OUTPUT_NAME "sstruct_mv_openmpi_hybrid")
 
@@ -102,11 +114,95 @@ if(HAVE_OPENMPI)
         ${OpenMPI_SHARED_LIBRARIES}
         m
     )
+    add_custom_command (
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_mpi.a
+        TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_mpi.a
+        COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_mpi.a
+        DEPENDS sstruct_mv_openmpi_mpi
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    #add_custom_target(runsstruct_mv_openmpi_mpi ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libsstruct_mv_openmpi_mpi.a)
+    add_custom_target(runsstruct_mv_openmpi_mpi ALL DEPENDS sstruct_mv_openmpi_mpi)
 
     set_target_properties(sstruct_mv_openmpi_mpi PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
     set_target_properties(sstruct_mv_openmpi_mpi PROPERTIES OUTPUT_NAME "sstruct_mv_openmpi_mpi")
 
     install(TARGETS sstruct_mv_openmpi_mpi ARCHIVE
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+endif()
+ 
+
+if(HAVE_MPT)
+
+    if(OpenMP_FLAG_DETECTED)
+
+        # Hybrid OpenMP/MPI library section -------------------------------------------
+
+        add_library(sstruct_mv_mpt_hybrid STATIC
+            ${SSTRUCT_MV_SOURCES}
+        )
+
+        target_include_directories(sstruct_mv_mpt_hybrid PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+            ${CMAKE_CURRENT_SOURCE_DIR}/../struct_mv
+            ${CMAKE_CURRENT_SOURCE_DIR}/../seq_mv
+            ${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_mv
+            ${CMAKE_CURRENT_SOURCE_DIR}/../IJ_mv
+            ${CMAKE_CURRENT_BINARY_DIR}
+            ${OpenMP_INCLUDE_DIRS}
+            ${Mpt_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(sstruct_mv_mpt_hybrid
+            ${CMAKE_DL_LIBS}
+            ${Mpt_SHARED_LIBRARIES}
+            ${OPENMP_LIBS}
+            m
+        )
+
+        set_target_properties(sstruct_mv_mpt_hybrid PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+        set_target_properties(sstruct_mv_mpt_hybrid PROPERTIES OUTPUT_NAME "sstruct_mv_mpt_hybrid")
+
+        install(TARGETS sstruct_mv_mpt_hybrid ARCHIVE
+                DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+    endif()
+
+    # MPI library only section -------------------------------------------
+
+    add_library(sstruct_mv_mpt_mpi STATIC
+        ${SSTRUCT_MV_SOURCES}
+    )
+
+    target_include_directories(sstruct_mv_mpt_mpi PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../utilities
+        ${CMAKE_CURRENT_SOURCE_DIR}/../struct_mv
+        ${CMAKE_CURRENT_SOURCE_DIR}/../seq_mv
+        ${CMAKE_CURRENT_SOURCE_DIR}/../parcsr_mv
+        ${CMAKE_CURRENT_SOURCE_DIR}/../IJ_mv
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${Mpt_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(sstruct_mv_mpt_mpi
+        ${CMAKE_DL_LIBS}
+        ${Mpt_SHARED_LIBRARIES}
+        m
+    )
+
+    set_target_properties(sstruct_mv_mpt_mpi PROPERTIES COMPILE_DEFINITIONS "${Mpt_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
+    set_target_properties(sstruct_mv_mpt_mpi PROPERTIES OUTPUT_NAME "sstruct_mv_mpt_mpi")
+
+    install(TARGETS sstruct_mv_mpt_mpi ARCHIVE
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
     )
 

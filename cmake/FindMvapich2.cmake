@@ -44,18 +44,21 @@ find_library(Mvapich2_verbs_LIBRARY_SHARED NAMES verbs
     HINTS ${MVAPICH2_DIR}
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
     )
+#message(STATUS "Mvapich2 Mvapich2_verbs_LIBRARY_SHARED: " ${Mvapich2_verbs_LIBRARY_SHARED})
 
 find_library(Mvapich2_common_LIBRARY_SHARED NAMES common
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
     )
+#message(STATUS "Mvapich2 Mvapich2_common_LIBRARY_SHARED: " ${Mvapich2_common_LIBRARY_SHARED})
 
 find_library(Mvapich2_mpl_LIBRARY_SHARED NAMES mpl
     HINTS $ENV{MVAPICH2_DIR}
     HINTS ${MVAPICH2_DIR}
     PATH_SUFFIXES lib lib64 lib/shared lib64/shared
     )
+#message(STATUS "Mvapich2 Mvapich2_mpl_LIBRARY_SHARED: " ${Mvapich2_mpl_LIBRARY_SHARED})
 
 find_package_handle_standard_args(
     Mvapich2 DEFAULT_MSG
@@ -65,15 +68,15 @@ find_package_handle_standard_args(
 
 set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_LIBRARY_SHARED})
 
-if (${Mvapich2_common_LIBRARY_SHARED})
+if (Mvapich2_common_LIBRARY_SHARED)
     set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_common_LIBRARY_SHARED})
 endif()
 
-if (${Mvapich2_verbs_LIBRARY_SHARED})
+if (Mvapich2_verbs_LIBRARY_SHARED)
     set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_verbs_LIBRARY_SHARED})
 endif()
 
-if (${Mvapich2_mpl_LIBRARY_SHARED})
+if (Mvapich2_mpl_LIBRARY_SHARED)
     set(Mvapich2_SHARED_LIBRARIES ${Mvapich2_SHARED_LIBRARIES} ${Mvapich2_mpl_LIBRARY_SHARED})
 endif()
 

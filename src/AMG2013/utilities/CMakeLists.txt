@@ -64,21 +64,33 @@ if(HAVE_OPENMPI)
             m
         )
 
+        add_custom_command (
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_hybrid.a
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_hybrid.a
+            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_hybrid.a
+            DEPENDS HYPRE_utilities_openmpi_hybrid
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+        #add_custom_target(runHYPRE_utilities_openmpi_hybrid ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_hybrid.a)
+        add_custom_target(runHYPRE_utilities_openmpi_hybrid ALL DEPENDS HYPRE_utilities_openmpi_hybrid)
+
         set_target_properties(HYPRE_utilities_openmpi_hybrid PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
         set_target_properties(HYPRE_utilities_openmpi_hybrid PROPERTIES OUTPUT_NAME "HYPRE_utilities_openmpi_hybrid")
 
-        add_custom_command (
-            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
-            TARGET ${TARGET_NAME} POST_BUILD 
-            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
-            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
-            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
         #add_custom_command (
-        #    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
+        #    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
+        #    TARGET ${TARGET_NAME} POST_BUILD 
+        #    COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
+        #    COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
+        #    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
+        #    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        #)
+        #add_custom_command (
+        #    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
         #    TARGET ${TARGET_NAME} POST_BUILD
-        #    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libutilities_openmpi_hybrid.a
+        #    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_utilities_openmpi_hybrid.a
         #    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         # )
 
@@ -106,6 +118,18 @@ if(HAVE_OPENMPI)
         ${OpenMPI_SHARED_LIBRARIES}
         m
     )
+
+    add_custom_command (
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_mpi.a
+        TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_mpi.a
+        COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_mpi.a
+        DEPENDS HYPRE_utilities_openmpi_mpi
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    #add_custom_target(runHYPRE_utilities_openmpi_mpi ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libHYPRE_utilities_openmpi_mpi.a)
+    add_custom_target(runHYPRE_utilities_openmpi_mpi ALL DEPENDS HYPRE_utilities_openmpi_mpi)
 
     set_target_properties(HYPRE_utilities_openmpi_mpi PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
     set_target_properties(HYPRE_utilities_openmpi_mpi PROPERTIES OUTPUT_NAME "HYPRE_utilities_openmpi_mpi")
