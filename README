@@ -20,6 +20,8 @@ The purpose of this utility is to test open speed shop on a number of sample pro
 	to use the most recent baseline dir for a version other than what is specifed in the env file.
 		eg. --baseline-version oss_offline-2.2.2
 
+NEW: Pleides users see README_PLEIDES
+
 ___________________________________________________________________________________
 sample workflow
 __________________________________________________________________________________
@@ -62,8 +64,8 @@ cc - the compiler, options are intel, gnu, pgi
 mpi_imp - the name of the mpi implementations, openmp, openmpi, mpt etc. this needs to match name in the binary files
 cc_module - the module for the compiler
 mpi_module - the module for the mpi implementation
-mpi_cmake_flag - this variable tells cmake which type of mpi implementation you are using, options are, -DMPT_DIR, -DOPENMPIDIR (maybe others as well?)
-cmake_flag_var - the environment variable you wish the mpi_cmake_flag to be set to, usually something like MPI_ROOT or whatever is in your mpi module file
+mpi_cmake_flag - this variable tells cmake which type of mpi implementation you are using, options are, -DMPT_DIR, -DOPENMPIDIR, -DMICH_DIR (maybe others as well?)
+cmake_flag_var - the environment variable or path you wish the mpi_cmake_flag to be set to, usually something like $MPI_ROOT or whatever is in your mpi module file. if this starts with a $ it will be treated as an environment variable, otherwise it will be treated as a path
 other_modules - a list of additional modules you may need to use to compile
 
 

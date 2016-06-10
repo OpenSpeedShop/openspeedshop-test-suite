@@ -55,10 +55,10 @@ def run_cmake(build_dir, flags):
     try: shutil.rmtree(build_dir)
     except: pass
     mk_cd(build_dir)
-    f = lambda x: x[0] + '=' + x[1]
+    f = lambda x: str(x[0] + '=' + x[1])
     flags = list(map(f,flags))
     cmd = ['cmake', '..'] + flags
-
+    print str(cmd)
     for c in [cmd, ['make', 'clean'], ['make'], ['make', 'install']]:
         p = Popen(c)
         p.wait()
@@ -86,7 +86,10 @@ def build_tests(env):
 	    module('load', m)
 	module('load', profile['cc_module'])
 	module('load', profile['mpi_module'])
-        profile_flags = [(profile['mpi_cmake_flag'],os.environ[profile['cmake_flag_var']])]
+	if profile['cmake_flag_var'][0] == '$': #treat as an environment variable
+	    profile_flags = [(profile['mpi_cmake_flag'],os.environ[profile['cmake_flag_var'][1:]])] #strip the $ sign
+	else: #treat as a path
+	    profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
 	if 'intel' == profile['cc']:
 	    intel_flags = [('-DCMAKE_CXX_COMPILER', 'icpc'),
 		('-DCMAKE_C_COMPILER', 'icc'),
@@ -139,7 +142,7 @@ def create_profiles(filename):
 	"mpi_imp": "mpt",
 	"cc_module": "comp-intel/2016.2.181",
 	"mpi_module": "mpi-sgi/mpt.2.12r26",
-	"cmake_flag_var": "MPI_ROOT",
+	"cmake_flag_var": "$MPI_ROOT",
 	"mpi_cmake_flag": "-DMPT_DIR",
 	"other_modules":["math/intel_mkl_default"]}]
 
