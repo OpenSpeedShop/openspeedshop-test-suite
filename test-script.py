@@ -29,7 +29,7 @@ def test_obj(env, file_name):
 	return None
     test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
     test['name'] = lst[1]
-    test['mpi_imp'] = lst[3] if len(lst) > 3 else ''
+    test['mpi_imp'] = lst[2] if len(lst) > 3 else ''
     test['mpi_module'] =  ''
     for p in env['profiles']:
 	if p['mpi_imp'] == test['mpi_imp']:
@@ -136,7 +136,7 @@ def create_profiles(filename):
     print "please edit this to have correct values"
 
     profiles = [{ "cc": "intel",
-	"mpi_imp": "openmp",
+	"mpi_imp": "mpt",
 	"cc_module": "comp-intel/2016.2.181",
 	"mpi_module": "mpi-sgi/mpt.2.12r26",
 	"cmake_flag_var": "MPI_ROOT",
@@ -148,7 +148,7 @@ def create_profiles(filename):
     pfile.close()
 
 def read_profiles(filename):
-    '''Read in profiles information from env.json'''
+    '''Read in profiles information from filename'''
 
     try:
 	envfile = open(filename,'r')
@@ -214,9 +214,9 @@ def run_tests(env, tests, is_baseline):
     if job_cont == 'raw':	
         return raw_job_controller(env, tests)
     elif job_cont == 'moab':
-        return raw_job_controller(env, tests)
+        return moab_job_controller(env, tests)
     elif job_cont == 'slurm':
-        return raw_job_controller(env, tests)
+        return slurm_job_controller(env, tests)
     elif job_cont == 'pbs':
         return pbs_job_controller(env, tests)
     else:
@@ -224,30 +224,10 @@ def run_tests(env, tests, is_baseline):
     os.chdir(base_dir)
 		
 def moab_job_controller(env, tests):
-    '''
-        #PBS -l nodes=4:ppn=12
-        #PBS -l walltime=1:00:00:00
-        #PBS -A xyz-123-ab
-        #PBS -j oe
-        #PBS -V
-        #PBS -N jobname
-         
-        import os
-        import subprocess
-         
-        os.chdir(os.getenv('PBS_O_WORKDIR', '/home/username/your_project_name'))
-        os.environ['IPATH_NO_CPUAFFINITY'] = '1'
-        os.environ['OMP_NUM_THREADS'] = '2'
-         
-        subprocess.call("mpiexec -n 4 -npernode 1 ./yourcode > results.txt", shell=True)
-         
-        # Some other work in pure Python
-    '''
     pass #need to implement
 
 
 def slurm_job_controller(env, tests):
-
     pass #need to implement
 
 def pbs_job_controller(env, tests):
@@ -284,8 +264,6 @@ setenv OMP_NUM_THREADS 2\n'
                 for c in t['collectors']: #loop through all collectors to run
                     #run each collector on the test program
                     #also build the mpirun command
-		#TODO check for sequential jobs and remove mpiexec call
-		#also TODO pipe input files on select tests
                     oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + input_pipe + '\"\n'
 
                     jobscript = string1 + \
@@ -341,7 +319,10 @@ def raw_job_controller(env, tests):
     os.environ['OMP_NUM_THREADS'] = '2'
     
     for t in tests: #loop through all tests
+	module('purge')
+	module('load',env['openss_module'])
         if t['mpi_imp'] != '': #check if this an mpi test
+	    module('load',t['mpi_module'])
             for mpi in  env['mpi_drivers']: #loop through mpi_commands
                 for c in t['collectors']: #loop through all collectors to run
                     #run each collector on the test program
@@ -420,7 +401,7 @@ def compare_tests(env, tests, args):
     big_log = [] #log of all tests
     variance = env['acceptable_variance']  #allowed variance in percent
 
-    #TODO. instead of searching for test objects, search by  db files
+    #instead of searching for test objects, search by  db files
     pattern = re.compile(r'.*\.openss$', re.M|re.I)
 
     for root, dirs, files in os.walk(baseline_dir):
