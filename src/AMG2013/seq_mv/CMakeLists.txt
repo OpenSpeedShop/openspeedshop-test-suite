@@ -65,6 +65,18 @@ if(HAVE_OPENMPI)
             m
         )
 
+        add_custom_command (
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            TARGET ${TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a
+            DEPENDS seq_mv_openmpi_hybrid
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+
+        #add_custom_target(runseq_mv_openmpi_hybrid ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_hybrid.a)
+        add_custom_target(runseq_mv_openmpi_hybrid ALL DEPENDS seq_mv_openmpi_hybrid)
+
         set_target_properties(seq_mv_openmpi_hybrid PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI=1;HYPRE_USING_OPENMP;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
         set_target_properties(seq_mv_openmpi_hybrid PROPERTIES OUTPUT_NAME "seq_mv_openmpi_hybrid")
 
@@ -93,6 +105,18 @@ if(HAVE_OPENMPI)
         ${OpenMPI_SHARED_LIBRARIES}
         m
     )
+
+    add_custom_command (
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_AR} -rcu ${CMAKE_CURRENT_BINARY_DIR}/*.o* ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        COMMAND ${CMAKE_RANLIB} ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a
+        DEPENDS seq_mv_openmpi_mpi
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+    #add_custom_target(runseq_mv_openmpi_mpi ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libseq_mv_openmpi_mpi.a)
+    add_custom_target(runseq_mv_openmpi_mpi ALL DEPENDS seq_mv_openmpi_mpi)
 
     set_target_properties(seq_mv_openmpi_mpi PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};TIMER_USE_MPI;HYPRE_LONG_LONG;HYPRE_NO_GLOBAL_PARTITION;HYPRE_TIMING")
     set_target_properties(seq_mv_openmpi_mpi PROPERTIES OUTPUT_NAME "seq_mv_openmpi_mpi")
