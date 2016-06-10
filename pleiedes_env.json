@@ -13,5 +13,6 @@
   "oss_version": "test-version",
   "src_dir": "src",
   "input_dir": "input_files",
-  "test_data_dir": "test_data"
+  "test_data_dir": "test_data",
+  "max_concurrent_jobs":25
 }

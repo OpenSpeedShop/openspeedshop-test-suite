@@ -25,7 +25,7 @@ def test_obj(env, file_name):
 
     test = {}
     lst = file_name.split('-')
-    if len(lst) < 4:
+    if len(lst) < 3:
 	return None
     test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
     test['name'] = lst[1]
@@ -126,6 +126,7 @@ def create_env(filename):
         'job_controller':'raw',
         'acceptable_variance':10.0,
         'mpi_drivers':['mpirun -np 8'],
+	'max_concurrent_jobs':25,
 	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
 	'input_dir':'input_files' }
     envfile = open(filename,'w')
@@ -235,6 +236,9 @@ def slurm_job_controller(env, tests):
 
 def pbs_job_controller(env, tests):
 
+    j_ids = [] #pbs job ids, for limiting the number of concurrent jobs via dependencies
+    max_jobs = env['max_concurrent_jobs']
+    num_jobs = 0
     for t in tests: #loop through all tests
 	
 	#locate any input files that need to be piped for specific tests
@@ -284,10 +288,17 @@ echo " =========================="\n\
 		    file = open('temp_pbs_run.pbs', 'w')
 		    file.write(jobscript)
 		    file.close()
-		    print 'made job script'
-		    pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
-		    p = Popen(pbs_cmd)
+		    if num_jobs < max_jobs: #submit the first jobs
+			pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
+		    else: #create a dependency chain of jobs to avoid overloading the job controller
+			pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
+		    print 'created job script, submitting with ' + str(pbs_cmd)
+		    p = Popen(pbs_cmd, stdout=PIPE)
 		    p.wait()
+		    jid = p.stdout.read()
+		    j_ids.append(jid)
+		    num_jobs += 1
+
 	else: #not an mpi test
 	    for c in t['collectors']:	
                 oss_cmd = 'oss' + c + ' \"' + t['exe'] + input_pipe + '\"\n'
@@ -304,11 +315,20 @@ echo " =========================="\n\
 		file = open('temp_pbs_run.pbs', 'w')
 		file.write(jobscript)
 		file.close()
-		print 'made job script'
-		pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
-		p = Popen(pbs_cmd)
+		if num_jobs < max_jobs: #submit the first jobs
+		    pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
+		else: #create a dependency chain of jobs to avoid overloading the job controller
+		    pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
+		print 'created job script, submitting with ' + str(pbs_cmd)
+		p = Popen(pbs_cmd, stdout=PIPE)
 		p.wait()
+		jid = p.stdout.read()
+		j_ids.append(jid)
+		num_jobs += 1
+
     os.remove('temp_pbs_run.pbs')
+    print'_______________________________\n'
+    print 'Created and submitted all job scripts, please allow some time for them to complete\n'
 	
 
 
@@ -611,7 +631,8 @@ def main(args=None, error_func=None):
         exit(0)
     
     tests = []
-    bd = os.path.join(base_dir, env['bin_dir'])
+    #bd = os.path.join(base_dir, env['bin_dir'])
+    bd = env['bin_dir']
     for root, dirs, files in os.walk(bd):
         for entry in files:
             if os.access(os.path.join(root,entry), os.X_OK): #check that file has x bit
