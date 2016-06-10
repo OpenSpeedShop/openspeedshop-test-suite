@@ -372,6 +372,7 @@ def raw_job_controller(env, tests):
 def compare_tests(env, tests, args):
     '''compare the results of a list of tests, summarize'''
 
+    module('load',env['openss_module'])
     base_dir = os.getcwd()
     try:
         os.chdir(env['test_data_dir'])
@@ -432,6 +433,7 @@ def compare_tests(env, tests, args):
             output = p.stdout.read()
             matches = re.finditer(r'^(\s*)(\d*\.\d*)(\s*)(\d*\.\d*)(\s+)([_\w]+)',output, re.M|re.I)
             log = "------------------------------------------------------\n"
+	    log += 'running tests on ' + f + '\n'
             #log += 'compare for ' + c + ' on ' + x + ':\n\n'
             all_passed = True
 
@@ -450,9 +452,9 @@ def compare_tests(env, tests, args):
                     all_passed = False
             if all_passed:
                 log += 'all function values are within acceptable variance\n'
-                #succeeded.append('test ' + c + ' on ' + x + ' passed all tests')
+                succeeded.append( f + ' passed all tests')
             else:
-                failed.append('test ' + c + ' on ' + x + ' failed a variance test')
+                failed.append(f + ' failed a variance test')
             log += "------------------------------------------------------\n"
             big_log.append(log)
             #compare_file = get_comp_file_name(cmd)
