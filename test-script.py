@@ -255,8 +255,8 @@ def pbs_job_controller(env, tests):
 #       qsub run.pbs\n\
 \n\
 #PBS -l ncpus=16,nodes=2\n\
-#PBS -N test-suite-' + t['name'] + '\n' + \
-'#PBS -l walltime=0:10:00\n\
+#PBS -N test-suite-' + t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler'] + '\n' + \
+'#PBS -l walltime=1:00:00\n\
 #PBS -l mem=1000mb\n\
 #PBS -j oe\n\
 #PBS -m bea\n\
@@ -267,64 +267,68 @@ setenv OMP_NUM_THREADS 2\n'
 	
         if t['mpi_imp'] != '': #check if this an mpi test
 
+	    oss_cmds = ''
             for mpi in  env['mpi_drivers']: #loop through mpi_commands
                 for c in t['collectors']: #loop through all collectors to run
                     #run each collector on the test program
                     #also build the mpirun command
                     oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + input_pipe + '\"\n'
+		    oss_cmds += oss_cmd
 
-                    jobscript = string1 + \
+            jobscript = string1 + \
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
 module load modules ' + env['openss_module'] + '\n\
 module load modules ' + t['mpi_module'] + '\n\
 # run case\n\
 ' + \
-oss_cmd + \
+oss_cmds + \
 'echo " "\n\
 echo "finished run"\n\
 echo " "\n\
 echo " =========================="\n\
 '
-		    file = open('temp_pbs_run.pbs', 'w')
-		    file.write(jobscript)
-		    file.close()
-		    if num_jobs < max_jobs: #submit the first jobs
-			pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
-		    else: #create a dependency chain of jobs to avoid overloading the job controller
-			pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
-		    print 'created job script, submitting with ' + str(pbs_cmd)
-		    p = Popen(pbs_cmd, stdout=PIPE)
-		    p.wait()
-		    jid = p.stdout.read()
-		    j_ids.append(jid)
-		    num_jobs += 1
+	    file = open('temp_pbs_run.pbs', 'w')
+	    file.write(jobscript)
+	    file.close()
+	    if num_jobs < max_jobs: #submit the first jobs
+		pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
+	    else: #create a dependency chain of jobs to avoid overloading the job controller
+		pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
+	    print 'created job script, submitting with ' + str(pbs_cmd)
+	    p = Popen(pbs_cmd, stdout=PIPE)
+	    p.wait()
+	    jid = p.stdout.read()
+	    j_ids.append(jid)
+	    num_jobs += 1
 
 	else: #not an mpi test
+	    oss_cmds = ''
 	    for c in t['collectors']:	
                 oss_cmd = 'oss' + c + ' \"' + t['exe'] + input_pipe + '\"\n'
-	        jobscript = string1 + \
+		oss_cmds += oss_cmd
+	    jobscript = string1 + \
 'module load modules ' + env['openss_module'] + '\n\
 # run case\n\
 ' + \
-oss_cmd + \
+oss_cmds + \
 'echo " "\n\
 echo "finished run"\n\
 echo " "\n\
 echo " =========================="\n\
 '
-		file = open('temp_pbs_run.pbs', 'w')
-		file.write(jobscript)
-		file.close()
-		if num_jobs < max_jobs: #submit the first jobs
-		    pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
-		else: #create a dependency chain of jobs to avoid overloading the job controller
-		    pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
-		print 'created job script, submitting with ' + str(pbs_cmd)
-		p = Popen(pbs_cmd, stdout=PIPE)
-		p.wait()
-		jid = p.stdout.read()
-		j_ids.append(jid)
-		num_jobs += 1
+	    file = open('temp_pbs_run.pbs', 'w')
+	    file.write(jobscript)
+	    file.close()
+	    if num_jobs < max_jobs: #submit the first jobs
+		pbs_cmd = ['qsub', 'temp_pbs_run.pbs']
+	    else: #create a dependency chain of jobs to avoid overloading the job controller
+		pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
+	    print 'created job script, submitting with ' + str(pbs_cmd)
+	    p = Popen(pbs_cmd, stdout=PIPE)
+	    p.wait()
+	    jid = p.stdout.read()
+	    j_ids.append(jid)
+	    num_jobs += 1
 
     os.remove('temp_pbs_run.pbs')
     print'_______________________________\n'
