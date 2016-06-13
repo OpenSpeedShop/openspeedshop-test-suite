@@ -20,7 +20,7 @@ The purpose of this utility is to test open speed shop on a number of sample pro
 	to use the most recent baseline dir for a version other than what is specifed in the env file.
 		eg. --baseline-version oss_offline-2.2.2
 
-NEW: Pleides users see README_PLEIDES
+NEW: Pleides users see README_PLEIEDES
 
 ___________________________________________________________________________________
 sample workflow
@@ -29,7 +29,7 @@ ________________________________________________________________________________
 1)
 the test suite is configured via 2 files, the env.json and profiles.json. by default, the test suite looks for the files with these names in its install directory. you can manually specify other files using the -p for profiles and -e for environment flags.
 
-create the default environment file env.json with the commandj
+create the default environment file env.json with the command
 
 ./test-script.py --create-env
 
@@ -38,8 +38,6 @@ some defaults. Edit these to appropriate values before continuing.
 
 options are as follows:
 bin_dir - directory to store compiled tests in
-mpi_drivers - list of commands you us to run mpi applications, include argments
-		e.g. 'mpi_drivers':['mpirun -np 2']
 
 src_dir - directory containing the source for the tests
 test_data_dir - directory to store the test data
@@ -67,6 +65,8 @@ mpi_module - the module for the mpi implementation
 mpi_cmake_flag - this variable tells cmake which type of mpi implementation you are using, options are, -DMPT_DIR, -DOPENMPIDIR, -DMICH_DIR (maybe others as well?)
 cmake_flag_var - the environment variable or path you wish the mpi_cmake_flag to be set to, usually something like $MPI_ROOT or whatever is in your mpi module file. if this starts with a $ it will be treated as an environment variable, otherwise it will be treated as a path
 other_modules - a list of additional modules you may need to use to compile
+mpi_drivers - command you us to run mpi applications, include argments
+		e.g. 'mpi_driver':'mpirun -np 8'
 
 
 2)

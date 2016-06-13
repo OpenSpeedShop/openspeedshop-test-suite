@@ -13,7 +13,7 @@ once you have the configuration files set up properly, you should be able to use
 
 ./test-script.py --build-tests
 ./test-script.py --create-baseline (takes a long time, asynchronous)
-./test-script.py --run-tests (same as above)
+./test-script.py --run-tests (same as above, only difference is where to store results)
 ./test-script.py --compare-results
 
 for more complicated usage options, see the main readme
