@@ -8,6 +8,7 @@
 
     "cmake_flag_var": "$MPI_ROOT",
     "mpi_cmake_flag": "-DMPT_DIR",
+    "mpi_driver": "mpiexec_mpt -np 8",
     "other_modules":["math/intel_mkl_default"]
   },
 
@@ -20,6 +21,7 @@
 
     "cmake_flag_var": "$I_MPI_ROOT",
     "mpi_cmake_flag": "-DMPICH_DIR",
+    "mpi_driver": "mpiexec -n 8",
     "other_modules":["math/intel_mkl_default"]
   },
 
@@ -32,6 +34,7 @@
 
     "cmake_flag_var": "/nasa/openmpi/1.6.5/gcc/",
     "mpi_cmake_flag": "-DOPENMPI_DIR",
+    "mpi_driver": "mpirun -np 8",
     "other_modules":["math-libs/2015Q1"]
   },
 
@@ -44,6 +47,7 @@
 
     "cmake_flag_var": "$MPI_ROOT",
     "mpi_cmake_flag": "-DMPT_DIR",
+    "mpi_driver": "mpiexec_mpt -np 8",
     "other_modules":["math-libs/2015Q1"]
   }
 

@@ -143,7 +143,7 @@ def create_profiles(filename):
 	"mpi_imp": "mpt",
 	"cc_module": "comp-intel/2016.2.181",
 	"mpi_module": "mpi-sgi/mpt.2.12r26",
-        'mpi_driver':'mpirun -np 8',
+        'mpi_driver':'mpiexec_mpt -np 8',
 	"cmake_flag_var": "$MPI_ROOT",
 	"mpi_cmake_flag": "-DMPT_DIR",
 	"other_modules":["math/intel_mkl_default"]}]
