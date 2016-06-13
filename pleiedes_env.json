@@ -5,9 +5,6 @@
 
   "dynamic_cbtf": true,
   "job_controller": "pbs",
-  "mpi_drivers": [
-    "mpiexec_mpt -n 8"
-  ],
   "ompt_root": "/nobackupnfs2/jgalarow/krellroot_v2.2.6",
   "openss_module": "/home4/jgalarow/privatemodules/osscbtf226",
   "oss_version": "test-version",

@@ -34,6 +34,7 @@ def test_obj(env, file_name):
     for p in env['profiles']:
 	if p['mpi_imp'] == test['mpi_imp']:
 	    test['mpi_module'] = p['mpi_module']
+	    test['mpi_driver'] = p['mpi_driver']
     test['compiler'] = lst[-1]
     #determine appropriate collectors, according to the old test-tool.sh
     coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime']
@@ -125,7 +126,6 @@ def create_env(filename):
 	'ompt_root':'/nobackupnfs2/jgalarow/krellroot_v2.2.6',
         'job_controller':'raw',
         'acceptable_variance':10.0,
-        'mpi_drivers':['mpirun -np 8'],
 	'max_concurrent_jobs':25,
 	'openss_module':'home4/jgalarow/privatemodules/osscbtf226',
 	'input_dir':'input_files' }
@@ -143,6 +143,7 @@ def create_profiles(filename):
 	"mpi_imp": "mpt",
 	"cc_module": "comp-intel/2016.2.181",
 	"mpi_module": "mpi-sgi/mpt.2.12r26",
+        'mpi_driver':'mpiexec_mpt -np 8',
 	"cmake_flag_var": "$MPI_ROOT",
 	"mpi_cmake_flag": "-DMPT_DIR",
 	"other_modules":["math/intel_mkl_default"]}]
@@ -269,12 +270,11 @@ setenv OMP_NUM_THREADS 2\n'
         if t['mpi_imp'] != '': #check if this an mpi test
 
 	    oss_cmds = ''
-            for mpi in  env['mpi_drivers']: #loop through mpi_commands
-                for c in t['collectors']: #loop through all collectors to run
-                    #run each collector on the test program
-                    #also build the mpirun command
-                    oss_cmd = 'oss' + c + ' \"' + mpi + ' ' + t['exe'] + input_pipe + '\"\n'
-		    oss_cmds += oss_cmd
+            for c in t['collectors']: #loop through all collectors to run
+                #run each collector on the test program
+                #also build the mpirun command
+		oss_cmd = 'oss' + c + ' \"' + t['mpi_driver'] + ' ' + t['exe'] + input_pipe + '\"\n'
+		oss_cmds += oss_cmd
 
             jobscript = string1 + \
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
@@ -296,6 +296,8 @@ echo " =========================="\n\
 	    else: #create a dependency chain of jobs to avoid overloading the job controller
 		pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
 	    print 'created job script, submitting with ' + str(pbs_cmd)
+	    print jobscript
+	    print '---------------------------------'
 	    p = Popen(pbs_cmd, stdout=PIPE)
 	    p.wait()
 	    jid = p.stdout.read()
@@ -325,6 +327,8 @@ echo " =========================="\n\
 	    else: #create a dependency chain of jobs to avoid overloading the job controller
 		pbs_cmd = ['qsub', '-W depend=afterany:'+j_ids[num_jobs-max_jobs][:-1], 'temp_pbs_run.pbs']
 	    print 'created job script, submitting with ' + str(pbs_cmd)
+	    print jobscript
+	    print '---------------------------------'
 	    p = Popen(pbs_cmd, stdout=PIPE)
 	    p.wait()
 	    jid = p.stdout.read()
