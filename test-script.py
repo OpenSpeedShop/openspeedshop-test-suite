@@ -262,6 +262,7 @@ def pbs_job_controller(env, tests):
 #PBS -m bea\n\
 #PBS -q debug\n\
 \n\
+source $MODULESHOME/init/csh\n\
 setenv OPENSS_DEBUG_STARTUP 1\n\
 setenv OMP_NUM_THREADS 2\n'
 	
