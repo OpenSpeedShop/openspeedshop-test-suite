@@ -7,7 +7,7 @@
   "job_controller": "pbs",
   "ompt_root": "/nobackupnfs2/jgalarow/krellroot_v2.2.6",
   "openss_module": "/home4/jgalarow/privatemodules/osscbtf226",
-  "oss_version": "test-version",
+  "oss_version": "osscbtf226",
   "src_dir": "src",
   "input_dir": "input_files",
   "test_data_dir": "test_data",
