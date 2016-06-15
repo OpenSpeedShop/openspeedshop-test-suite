@@ -39,25 +39,25 @@ endif()
 
 # OpenMP executable section -------------------------------------------
 
-add_executable(openmp-openmp-stress
+add_executable(openmp-openmp_stress
     ${OPENMP_STRESS_SOURCES}
 )
 
-target_include_directories(openmp-openmp-stress PUBLIC
+target_include_directories(openmp-openmp_stress PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${OpenMP_INCLUDE_DIRS}
 )
 
-target_link_libraries(openmp-openmp-stress
+target_link_libraries(openmp-openmp_stress
     ${CMAKE_DL_LIBS}
     ${OPENMP_LIBS}
     m
 )
 
-set_target_properties(openmp-openmp-stress PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};USE_MPI=1")
-set_target_properties(openmp-openmp-stress PROPERTIES OUTPUT_NAME "openmp-openmp-stress-${BUILD_COMPILER_NAME}")
+set_target_properties(openmp-openmp_stress PROPERTIES COMPILE_DEFINITIONS "${OpenMPI_DEFINES};USE_MPI=1")
+set_target_properties(openmp-openmp_stress PROPERTIES OUTPUT_NAME "openmp-openmp_stress-${BUILD_COMPILER_NAME}")
 
-install(TARGETS openmp-openmp-stress
+install(TARGETS openmp-openmp_stress
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 )

@@ -1,11 +1,11 @@
 #! /bin/bash
-
+pushd ..
 rm -rf build_pgi_application_tests
 mkdir -p build_pgi_application_tests
 pushd build_pgi_application_tests
 
-export OPENMPI_ROOT=/nasa/openmpi/1.6.5/gcc
-export BASE_DIR=/home4/jgalarow/osstestsuiteinstall\
+export OPENMPI_ROOT=/opt/openmpi-1.10.2
+export BASE_DIR=../bin
 
 cmake .. \
        -DCMAKE_INSTALL_PREFIX=${BASE_DIR} \
@@ -19,4 +19,5 @@ cmake .. \
 make clean
 make
 make install
+rm -rf build_pgi_application_tests
 

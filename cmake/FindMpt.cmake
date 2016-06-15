@@ -37,13 +37,21 @@ find_library(Mpt_LIBRARY_SHARED NAMES mpi
     PATH_SUFFIXES lib lib64
     )
 
+find_library(MptPlusPlus_LIBRARY_SHARED NAMES mpi++
+    HINTS $ENV{MPT_DIR}
+    HINTS ${MPT_DIR}
+    PATH_SUFFIXES lib lib64
+    )
+
 find_package_handle_standard_args(
     Mpt DEFAULT_MSG
     Mpt_LIBRARY_SHARED
     Mpt_INCLUDE_DIR
     )
 
-set(Mpt_SHARED_LIBRARIES ${Mpt_LIBRARY_SHARED})
+# stdc++ is required when adding in the mpi++ library which is apparently needed
+# by libmpi.so
+set(Mpt_SHARED_LIBRARIES ${Mpt_LIBRARY_SHARED} ${MptPlusPlus_LIBRARY_SHARED} stdc++ )
 set(Mpt_INCLUDE_DIRS ${Mpt_INCLUDE_DIR})
 set(Mpt_DEFINES "")
 set(SGIMPT_DEFINES "")

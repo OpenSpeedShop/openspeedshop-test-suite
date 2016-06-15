@@ -1,0 +1,55 @@
+[
+  {
+    "cc": "intel",
+    "mpi_imp": "mpt",
+
+    "cc_module": "comp-intel/2016.2.181",
+    "mpi_module": "mpi-sgi/mpt.2.12r26",
+
+    "cmake_flag_var": "$MPI_ROOT",
+    "mpi_cmake_flag": "-DMPT_DIR",
+    "mpi_driver": "mpiexec_mpt -np 8",
+    "other_modules":["math/intel_mkl_default"]
+  },
+
+  {
+    "cc": "intel",
+    "mpi_imp": "mpich",
+
+    "cc_module": "comp-intel/2016.2.181",
+    "mpi_module": "mpi-intel/5.0.3.048",
+
+    "cmake_flag_var": "$I_MPI_ROOT",
+    "mpi_cmake_flag": "-DMPICH_DIR",
+    "mpi_driver": "mpiexec -n 8",
+    "other_modules":["math/intel_mkl_default"]
+  },
+
+  {
+    "cc": "gnu",
+    "mpi_imp": "openmpi",
+
+    "cc_module": "gcc5/5.3.0",
+    "mpi_module": "mpi-openmpi/1.6.5-gcc",
+
+    "cmake_flag_var": "/nasa/openmpi/1.6.5/gcc/",
+    "mpi_cmake_flag": "-DOPENMPI_DIR",
+    "mpi_driver": "mpirun -np 8",
+    "other_modules":["math-libs/2015Q1"]
+  },
+
+  {
+    "cc": "gnu",
+    "mpi_imp": "mpt",
+
+    "cc_module": "gcc5/5.3.0",
+    "mpi_module": "mpi-sgi/mpt.2.12r26",
+
+    "cmake_flag_var": "$MPI_ROOT",
+    "mpi_cmake_flag": "-DMPT_DIR",
+    "mpi_driver": "mpiexec_mpt -np 8",
+    "other_modules":["math-libs/2015Q1"]
+  }
+
+
+]
