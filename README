@@ -1,146 +1,150 @@
 openspeedshop test utility:
 __________________________________________________________________________________
 
-The purpose of this utility is to test open speed shop on a number of sample programs and analyze the results. It supports 3 major operations, building, runnning, and comparing.
+The purpose of this utility is to test OpenSpeedShop on a number of sample programs 
+and analyze the results. It supports 3 major operations, building, runnning, and comparing.
 
-	- building (use --build-tests) calls one or more of the install scripts located in the build_scripts directory.
+    - Building (use --build-tests) calls one or more of the install scripts 
+               located in the build_scripts directory.
 
-	- running the tests can be done with either of the two commands (--create-baseline or --run-tests) the only difference between these commands is the location of the database files. These commands run all the oss tools on all the executable files in the bin directory. these should only be called after building
-		the database directory is as follows:
-			$install_dir/test_data/$oss_version/[baseline,results]/$date/
+    - Running the tests can be done with either of the two commands 
+               (--create-baseline or --run-tests) the only difference between these 
+               commands is the location of the database files. These commands run 
+               all the oss tools on all the executable files in the bin directory. 
+               These should only be called after building the database directory is as follows:
+                   $install_dir/test_data/$oss_version/[baseline,results]/$date/
 
-	- compare (use --compare-tests) this will run openss -batch on each of the database files in the results and baseline folders. Then it will look at the corresponding results and check to see if they are within acceptable variance (default 10.00%). results will be summarized and printed to the screen.
-		by default the script will look for the most recent date folder in the results and baseline folders in the folder for the oss_version specified in environment file. You can manually specify either of these directories with:
-		-b for baseline folder
-		-r for results folder
-		these paths can be absolute or relative to the test_data dir
-		eg. -b oss_offline-2.2.2/baseline/2016-05-11_14:28:21.023070/
-	or use:
-		--baseline-version
-	to use the most recent baseline dir for a version other than what is specifed in the env file.
-		eg. --baseline-version oss_offline-2.2.2
+    - Compare (use --compare-tests) this will run openss -batch on each of the database 
+              files in the results and baseline folders. Then it will look at the 
+              corresponding results and check to see if they are within acceptable 
+              variance (default 10.00%). results will be summarized and printed to the screen.
+              By default the script will look for the most recent date folder in the results 
+              and baseline folders in the folder for the oss_version specified in environment 
+              file. You can manually specify either of these directories with:
+	         -b for baseline folder
+       	         -r for results folder
+	     These paths can be absolute or relative to the test_data dir
+	         eg. -b oss_offline-2.2.2/baseline/2016-05-11_14:28:21.023070/
+             or use:
+     	         --baseline-version
+  	     To use the most recent baseline dir for a version other than what is specifed 
+             in the env file.
+	         eg. --baseline-version oss_offline-2.2.2
 
-NEW: Pleides users see README_PLEIEDES
-
+NEW: Pleides users see README_PLEIDES
 ___________________________________________________________________________________
-sample workflow
+Sample workflow
 __________________________________________________________________________________
 
 1)
-the test suite is configured via 2 files, the env.json and profiles.json. by default, the test suite looks for the files with these names in its install directory. you can manually specify other files using the -p for profiles and -e for environment flags.
+The test suite is configured via two (2) files, the env.json and profiles.json. by default, 
+the test suite looks for the files with these names in its install directory. you can manually 
+specify other files using the -p for profiles and -e for environment flags.
 
-create the default environment file env.json with the command
+Create the default environment file env.json with the commandj
 
 ./test-script.py --create-env
 
-this will create a default environment file env.json populated with
+This will create a default environment file env.json populated with
 some defaults. Edit these to appropriate values before continuing.
 
-options are as follows:
-bin_dir - directory to store compiled tests in
+The options are as follows:
+    bin_dir             - Directory to store compiled tests in
+    mpi_drivers         - List of commands you us to run mpi applications, include argments
+                        	e.g. 'mpi_drivers':['mpirun -np 2']
+    src_dir             - Directory containing the source for the tests
+    test_data_dir       - Directory to store the test data
+    input_dir           - Directory with input files for the tests that require them.
+    oss_version         - The current version of openss. This needs to be manually specified until 
+                          oss has a --version option
+    acceptable_variance - Floating point value in percent. maximum factor by which baseline and 
+                          results values can differ and still be allowed to pass
+    ompt_root           - Root directory of of ompt installation for libiomp, only used with intel compiler
+    openss_module       - Location of the openss module file. this is required when using a job controller only.
 
-src_dir - directory containing the source for the tests
-test_data_dir - directory to store the test data
-input_dir - directory with input files for the tests that require them.
-oss_version - the current version of openss. This needs to be manually specified until oss has a --version option
-acceptable_variance - floating point value in percent. maximum factor by which baseline and results values can differ and still be allowed to pass
-ompt_root : root directory of of ompt installation for libiomp, only used with intel compiler
-openss_module : location of the openss module file. this is required when using a job controller only.
-
-the following options will generally need to be modified before the first run:
-mpi_drivers, oss_version, ompt_root(only if using ompt), openss_module 
+The following options will generally need to be modified before the first run:
+    mpi_drivers, oss_version, ompt_root(only if using ompt), openss_module 
 
 _______________________
-create the profiles.json file. this contains information about how to build the tests on your system.
+Create the profiles.json file. this contains information about how to build the tests on your system.
 
 ./test-script.py --create-prof
 
-the default settings are to build using the intel compiler with sgi/mpt mpi implementation. these may need to be modified.
-this file is a list of build configurations. each configuration in a json object with the following properties
-
-cc - the compiler, options are intel, gnu, pgi
-mpi_imp - the name of the mpi implementations, openmp, openmpi, mpt etc. this needs to match name in the binary files
-cc_module - the module for the compiler
-mpi_module - the module for the mpi implementation
-mpi_cmake_flag - this variable tells cmake which type of mpi implementation you are using, options are, -DMPT_DIR, -DOPENMPIDIR, -DMICH_DIR (maybe others as well?)
-cmake_flag_var - the environment variable or path you wish the mpi_cmake_flag to be set to, usually something like $MPI_ROOT or whatever is in your mpi module file. if this starts with a $ it will be treated as an environment variable, otherwise it will be treated as a path
-other_modules - a list of additional modules you may need to use to compile
-mpi_drivers - command you us to run mpi applications, include argments
-		e.g. 'mpi_driver':'mpirun -np 8'
+The default settings are to build using the intel compiler with sgi/mpt mpi implementation. 
+These may need to be modified.
+This file is a list of build configurations. each configuration in a json object with the following properties
+    cc             - The compiler, options are intel, gnu, pgi
+    mpi_imp        - The name of the mpi implementations, openmp, openmpi, mpt etc. this needs to match name in the binary files
+    cc_module      - The module for the compiler
+    mpi_module     - The module for the mpi implementation
+    mpi_cmake_flag - This variable tells cmake which type of mpi implementation you are using, 
+                     options are, -DMPT_DIR, -DOPENMPIDIR, -DMICH_DIR (maybe others as well?)
+    cmake_flag_var - The environment variable or path you wish the mpi_cmake_flag to be set to, 
+                     usually something like $MPI_ROOT or whatever is in your mpi module file. 
+                     If this starts with a $ it will be treated as an environment variable, 
+                     otherwise it will be treated as a path
+    other_modules  - A list of additional modules you may need to use to compile
 
 
 2)
-build the tests with the command
+Build the tests with the command
 
 ./test-script.py --build-tests
 
-this will call the build scripts in build_scripts_dir specifed by the compilers option in the env file
+This will call the build scripts in build_scripts_dir specifed by the compilers 
+option in the env file
 
 3)
-create baselines for the various tests
+Create baselines for the various tests
 
 ./test-script.py --create-baseline
 
-this can take some time, results will be in
+This can take some time, results will be in
 test_data/baseline/$date by default
 
 4)
-create run data for the various tests
+Create run data for the various tests
 
 ./test-script.py --run-tests
 
-this can take some time, results will be in
+This can take some time, results will be in
 test_data/results/$date by default
 
 5)
-compare the results to the baseline data
+Compare the results to the baseline data
 
 ./test-script.py --compare-tests
 
-this tools looks in the most recent results and baseline folders by default
+This tools looks in the most recent results and baseline folders by default
 soon to add specific folder specification.
-by default the tool checks that all values are within 5% of each other.
+By default the tool checks that all values are within 5% of each other.
 this number will be an argument soon
 
-see ./test-script.py --help for more options
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+See ./test-script.py --help for more options
 
 _______________________________________________
 
-directory structure after building and running:
+Directory structure after building and running:
 
 openspeedshop-test-suite
-	CMakeLists.txt
-	cmake
-		...
-	bin
-		...
-	build_scripts
-		run_build*.sh
-	env.json
-	src
-		...
-	test-script.py
-	test_data
-		baseline
-			oss_version
-				date
-					openss_dbs...
-		results
-			oss_version
-				date
-					openss_dbs...
+    CMakeLists.txt
+    cmake
+	...
+    bin
+	...
+    build_scripts
+	run_build*.sh
+    env.json
+    src
+	...
+    test-script.py
+    test_data
+	baseline
+  	    oss_version
+		date
+	  	    openss_dbs...
+	results
+	    oss_version
+		date
+		    openss_dbs...
+
