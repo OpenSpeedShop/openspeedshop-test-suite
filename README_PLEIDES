@@ -1,25 +1,27 @@
-for custom configuration please see the main readme.
+For custom configuration, please see the main README.
 
-the openspeedshop test suite comes with default configuration files for some machines
-(currently only pleides). these configuration files are named:
-pleides_env.json, pleides_profiles.json
-to tell the test script to use these files, you can either:
-A (recomended): rename these files to env.json and profiles.json, respectively
-B: use the command line options -e pleides_env.json and -p pleides_profiles.json with the script
+The openspeedshop test suite comes with default configuration files for some machines
+(currently only pleides). These configuration files are named:
+    pleides_env.json, pleides_profiles.json
+To tell the test script to use these files, you can either:
+    A (recomended): rename these files to env.json and profiles.json, respectively
+    B: use the command line options -e pleides_env.json and -p pleides_profiles.json with the script
 
-note that if you use option A, be sure NOT to use test-script.py --create-env or --create-prof, as these options will overwrite the env.json and profiles.json files.
+Note that if you use option A, be sure NOT to use test-script.py --create-env or --create-prof, 
+as these options will overwrite the env.json and profiles.json files.
 
-once you have the configuration files set up properly, you should be able to use the following basic command sequence to do a simple test run
+Once you have the configuration files set up properly, you should be able to use the 
+following basic command sequence to do a simple test run
 
 ./test-script.py --build-tests
 ./test-script.py --create-baseline (takes a long time, asynchronous)
 ./test-script.py --run-tests (same as above)
 ./test-script.py --compare-results
 
-for more complicated usage options, see the main readme
+For more complicated usage options, see the main README.
 
-by default, pleides_profiles.json is configured to build using the following configurations
-intel cc with mpi-intel (mpich)
-intel cc with sgi/mpt
-gnu cc with openmpi
-gnu cc with sgi/mpt
+By default, pleides_profiles.json is configured to build using the following configurations
+    intel cc with mpi-intel (mpich)
+    intel cc with sgi/mpt
+    gnu cc with openmpi
+    gnu cc with sgi/mpt
