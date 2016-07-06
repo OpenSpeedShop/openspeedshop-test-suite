@@ -203,7 +203,7 @@ main(int argc, char* argv[])
 		    memcpy(buf_send, local,
 			   num[processor] * sizeof(particle_t));
 		
-                MPI_Pcontrol ( 1 );
+                /* MPI_Pcontrol ( 1 ); */
 		/* Issue the send/receive pair for this pipeline stage */
 		if(stage < (num_processors - 1)) {
 		    MPI_Isend(buf_send, buffer_size, type,
@@ -213,7 +213,7 @@ main(int argc, char* argv[])
 			      (processor + 1 + num_processors) % num_processors,
 			      0, MPI_COMM_WORLD, &request[1]);
 		}
-                MPI_Pcontrol ( 0 );
+                /* MPI_Pcontrol ( 0 ); */
 		
 		/* Compute forces */ 		
 		for(i = 0; i < num[processor]; i++) {
