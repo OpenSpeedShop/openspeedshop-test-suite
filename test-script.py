@@ -354,17 +354,17 @@ def raw_job_controller(env, tests):
 	module('purge')
 	module('load',env['openss_module'])
         if t['mpi_imp'] != '': #check if this an mpi test
+            print str(t)
 	    module('load',t['mpi_module'])
-            for mpi in  env['mpi_drivers']: #loop through mpi_commands
-                for c in t['collectors']: #loop through all collectors to run
-                    #run each collector on the test program
-                    #also build the mpirun command
-                    cmd = ['oss' + c, mpi + ' ' + t['exe']]
-                    print base_dir
-                    print cmd[0] + ' ' + cmd[1]
-                    p = Popen(cmd)
-                    p.wait() #wait for subprocess to finish
-                    db_name = get_db_name(cmd) #get the name of the output file
+            for c in t['collectors']: #loop through all collectors to run
+                #run each collector on the test program
+                #also build the mpirun command
+                cmd = ['oss' + c, t['mpi_driver'] + ' ' + t['exe']]
+                print base_dir
+                print cmd[0] + ' ' + cmd[1]
+                p = Popen(cmd)
+                p.wait() #wait for subprocess to finish
+                db_name = get_db_name(cmd) #get the name of the output file
                 #OPTIONAL os.rm(input_file)
                 if p.returncode != 0:
                     print 'failed to run test ' + c + ' ' + t['exe']
