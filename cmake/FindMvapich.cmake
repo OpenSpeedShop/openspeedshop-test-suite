@@ -59,7 +59,7 @@ find_package_handle_standard_args(
     )
 
 set(Mvapich_SHARED_LIBRARIES ${Mvapich_LIBRARY_SHARED})
-if (${Mvapich_umad_LIBRARY_SHARED})
+if (Mvapich_umad_LIBRARY_SHARED)
     set(Mvapich_SHARED_LIBRARIES ${Mvapich_SHARED_LIBRARIES} ${Mvapich_umad_LIBRARY_SHARED})
 endif()
 
