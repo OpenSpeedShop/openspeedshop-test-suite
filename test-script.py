@@ -242,6 +242,16 @@ def pbs_job_controller(env, tests):
     num_jobs = 0
     for t in tests: #loop through all tests
 	
+	#create a unique run folder so that topology files do not interfere. cd to this
+	#dir and run the test there. then have the pbs script move its files to the dest dir
+	#and clean up after itself.
+	base_dir = os.getcwd()
+	run_dir = t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler']
+	stdoutfile = os.path.join(base_dir,run_dir + 'stdout.txt')
+	stderrfile = os.path.join(base_dir,run_dir + 'stderr.txt')
+	mk_cd(run_dir)
+	cleanup_line = 'mv * ' + str(base_dir) #bash code to save files and cleanup
+	cleanup_line += '\n' + 'cd .. && rmdir ' + str(run_dir) + '\n'
 	#locate any input files that need to be piped for specific tests
 	input_pipe = ''
 	if t['name'] == 'matmul':
@@ -255,11 +265,12 @@ def pbs_job_controller(env, tests):
 #   submit this script using the command:\n\
 #       qsub run.pbs\n\
 \n\
-#PBS -l ncpus=16,nodes=2\n\
+#PBS -l select=2:ncpus=16:model=has\n\
 #PBS -N test-suite-' + t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler'] + '\n' + \
 '#PBS -l walltime=1:00:00\n\
-#PBS -l mem=1000mb\n\
 #PBS -j oe\n\
+#PBS -o ' + stdoutfile + '\n\
+#PBS -e ' + stderrfile + '\n\
 #PBS -m bea\n\
 #PBS -q debug\n\
 \n\
@@ -284,7 +295,7 @@ module load modules ' + t['mpi_module'] + '\n\
 ' + \
 oss_cmds + \
 'echo " "\n\
-echo "finished run"\n\
+echo "finished run, cleaning up..."\n' + cleanup_line + '\n\
 echo " "\n\
 echo " =========================="\n\
 '
@@ -315,7 +326,7 @@ echo " =========================="\n\
 ' + \
 oss_cmds + \
 'echo " "\n\
-echo "finished run"\n\
+echo "finished run, cleaning up..."\n' + cleanup_line + '\n\
 echo " "\n\
 echo " =========================="\n\
 '
@@ -334,8 +345,7 @@ echo " =========================="\n\
 	    jid = p.stdout.read()
 	    j_ids.append(jid)
 	    num_jobs += 1
-
-    os.remove('temp_pbs_run.pbs')
+	os.chdir(base_dir) #always cd back to correct dir
     print'_______________________________\n'
     print 'Created and submitted all job scripts, please allow some time for them to complete\n'
 	
