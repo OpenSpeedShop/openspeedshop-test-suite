@@ -1,4 +1,14 @@
 openspeedshop test utility:
+_________________________________________________________________________________
+quick start guide: if your computer is listed in the example_config folder (currently just pleiedes) you can use the following instructions
+
+cd openspeedshop-test-suite
+cp example_config/pleiedes_env.json env.json
+cp example_config/pleiedes_profiles.json profiles.json
+./test-script.py --build-tests
+./test-script.py --create-baseline
+./test-script.py --run-tests
+./test-script.py --compare tests
 __________________________________________________________________________________
 
 The purpose of this utility is to test OpenSpeedShop on a number of sample programs 
