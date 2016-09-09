@@ -27,7 +27,7 @@ def test_obj(env, file_name):
     lst = file_name.split('-')
     if len(lst) < 3:
 	return None
-    test['exe'] = os.path.join(os.path.join(env['install_dir'], env['bin_dir']), file_name)
+    test['exe'] = os.path.join(os.path.join(os.path.join(env['install_dir'], env['bin_dir']), 'bin'), file_name)
     test['name'] = lst[1]
     test['mpi_imp'] = lst[2] if len(lst) > 3 else ''
     test['mpi_module'] =  ''
@@ -74,7 +74,7 @@ def run_cmake(build_dir, flags):
 
 def build_tests(env):
     """run cmake to build the tests with each of the compilers specified in the env"""
-    cmake_flags = [('-DCMAKE_INSTALL_PREFIX', '..'),
+    cmake_flags = [('-DCMAKE_INSTALL_PREFIX', env['bin_dir']),
         ('-DCMAKE_BUILD_TYPE', 'None'),
         ('-DCMAKE_CXX_FLAGS', '-g -O2'),
         ('-DCMAKE_C_FLAGS', '-g -O2')]
@@ -240,6 +240,7 @@ def pbs_job_controller(env, tests):
     j_ids = [] #pbs job ids, for limiting the number of concurrent jobs via dependencies
     max_jobs = env['max_concurrent_jobs']
     num_jobs = 0
+    print str(tests)
     for t in tests: #loop through all tests
 	
 	#create a unique run folder so that topology files do not interfere. cd to this
@@ -291,6 +292,11 @@ setenv OMP_NUM_THREADS 2\n'
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
 module load modules ' + env['openss_module'] + '\n\
 module load modules ' + t['mpi_module'] + '\n\
+echo "showing environment for debugging purposes"\n\
+echo " =========================="\n\
+setenv CBTF_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
+env \n\
+echo " =========================="\n\
 # run case\n\
 ' + \
 oss_cmds + \
@@ -422,6 +428,8 @@ def compare_tests(env, tests, args):
             print 'failed to locate test_data directory, exiting...'
             return 1
 
+    results_dir = ''
+    baseline_dir = ''
     try: results_dir = get_recent(os.path.join(env['oss_version'],'results'))
     except: pass
     try: baseline_dir = get_recent(os.path.join(env['oss_version'],'baseline'))
@@ -434,7 +442,7 @@ def compare_tests(env, tests, args):
     if args.baseline_version:
         print args.baseline_version
         baseline_dir = get_recent(os.path.join(args.baseline_version,'baseline'))
-    if results_dir == None or baseline_dir == None or \
+    if results_dir == '' or baseline_dir == '' or \
         not os.path.isdir(results_dir) or not os.path.isdir(baseline_dir):
         print 'invalid test data directory'
         return 1
@@ -454,21 +462,27 @@ def compare_tests(env, tests, args):
 	    results_file = os.path.join(results_dir, f)
 	    baseline_file = os.path.join(baseline_dir, f)
 
+	    filename = os.path.split(f)[1]
+	    c = str(filename).split('\.')[0]
+            c = c.split('-')[-2]
             compare_metric = 'percent'
-	    '''
             if c in ['mem', 'mpi', 'io', 'iot', 'pthreads', 'mpit']:
                 compare_metric = 'counts'
             elif c == 'hwsamp':
                 compare_metric = 'allEvents'
-	    '''
 
             #move results and baseline files to a temp dir
             #cd, run, cd, rm
             mk_cd('temp')
+	    print os.getcwd()
+	    if not os.path.isfile('../'+baseline_file):
+		continue
+	    if not os.path.isfile('../'+results_file):
+		continue
             shutil.copyfile('../' + baseline_file, './baseline')
             shutil.copyfile('../' + results_file, './results')
 
-            cmd = 'osscompare \"baseline,results\" percent'
+            cmd = 'osscompare \"baseline,results\" ' + compare_metric
             #print str(cmd)
             p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
             p.wait()
@@ -482,7 +496,7 @@ def compare_tests(env, tests, args):
             os.chdir('..')
             shutil.rmtree('temp')
 
-            #print output
+            print output
             for m in matches:
                 func_name = m.groups()[5]
                 lcount = float(m.groups()[1])
@@ -546,8 +560,10 @@ def get_recent(d):
             if not recent:
                 recent = entry
             fmt_string = '%Y-%m-%d_%H:%M:%S.%f'
-            e = datetime.strptime(entry, fmt_string)
-            r = datetime.strptime(recent, fmt_string)
+            try: e = datetime.strptime(entry, fmt_string)
+	    except: pass
+            try: r = datetime.strptime(recent, fmt_string)
+	    except: pass
             if e > r:
                 recent = entry
     return os.path.join(d,recent)
@@ -631,6 +647,7 @@ def main(args=None, error_func=None):
     else:
         os.chdir(install_dir)
         env = read_env('env.json')
+    env['bin_dir'] = os.path.join(install_dir,env['bin_dir'])
 
     if args.p:
         pfile = args.p
