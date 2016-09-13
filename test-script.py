@@ -251,7 +251,7 @@ def pbs_job_controller(env, tests):
 	stdoutfile = os.path.join(base_dir,run_dir + 'stdout.txt')
 	stderrfile = os.path.join(base_dir,run_dir + 'stderr.txt')
 	mk_cd(run_dir)
-	cleanup_line = 'mv * ' + str(base_dir) #bash code to save files and cleanup
+	cleanup_line = 'mv '+ base_dir + '/' + run_dir + '/* ' + str(base_dir) #bash code to save files and cleanup
 	cleanup_line += '\n' + 'cd .. && rmdir ' + str(run_dir) + '\n'
 	#locate any input files that need to be piped for specific tests
 	input_pipe = ''
