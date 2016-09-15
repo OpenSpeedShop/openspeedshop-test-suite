@@ -210,9 +210,9 @@ def run_tests(env, tests, is_baseline):
     mk_cd(folder)
 
     #copy the 3 input files needed to the cwd
+    env['input_dir'] = os.path.join(base_dir, env['input_dir'])
     for f in ['input', 'matmul_input.txt', 'stress.input']:
-	input_dir = os.path.join(base_dir, env['input_dir'])
-        input_file = os.path.join(input_dir, f)
+        input_file = os.path.join(env['input_dir'], f)
         shutil.copyfile(input_file, os.path.join(os.getcwd(), f))
 
     job_cont = env['job_controller']
@@ -252,13 +252,19 @@ def pbs_job_controller(env, tests):
 	stderrfile = os.path.join(base_dir,run_dir + 'stderr.txt')
 	mk_cd(run_dir)
 	cleanup_line = 'mv '+ base_dir + '/' + run_dir + '/* ' + str(base_dir) #bash code to save files and cleanup
-	cleanup_line += '\n' + 'cd .. && rm -rf ' + str(run_dir) + '\n'
+	cleanup_line += '\n' + 'rm -rf ' + os.path.join(base_dir,str(run_dir)) + '\n'
+
+	#copy input files. will be ignored if not necesarry
+        for f in ['input', 'matmul_input.txt', 'stress.input']:
+            input_file = os.path.join(env['input_dir'], f)
+            shutil.copyfile(input_file, os.path.join(os.getcwd(), f))
+
 	#locate any input files that need to be piped for specific tests
 	input_pipe = ''
 	if t['name'] == 'matmul':
-	    input_pipe = ' < ../matmul_input.txt'
+	    input_pipe = ' < ' + os.path.join(os.getcwd(), 'matmul_input.txt')
 	elif t['name'] == 'openmp_stress':
-	    input_pipe = ' < ../stress.input'
+	    input_pipe = ' < ' + os.path.join(os.getcwd(), 'stress.input')
 
 	string1 = \
         '#PBS -S /bin/csh\n\
