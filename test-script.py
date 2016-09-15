@@ -252,13 +252,13 @@ def pbs_job_controller(env, tests):
 	stderrfile = os.path.join(base_dir,run_dir + 'stderr.txt')
 	mk_cd(run_dir)
 	cleanup_line = 'mv '+ base_dir + '/' + run_dir + '/* ' + str(base_dir) #bash code to save files and cleanup
-	cleanup_line += '\n' + 'cd .. && rmdir ' + str(run_dir) + '\n'
+	cleanup_line += '\n' + 'cd .. && rm -rf ' + str(run_dir) + '\n'
 	#locate any input files that need to be piped for specific tests
 	input_pipe = ''
 	if t['name'] == 'matmul':
-	    input_pipe = ' < matmul_input.txt'
+	    input_pipe = ' < ../matmul_input.txt'
 	elif t['name'] == 'openmp_stress':
-	    input_pipe = ' < stress.input'
+	    input_pipe = ' < ../stress.input'
 
 	string1 = \
         '#PBS -S /bin/csh\n\
