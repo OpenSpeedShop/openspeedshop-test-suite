@@ -265,6 +265,8 @@ def pbs_job_controller(env, tests):
 	    input_pipe = ' < ' + os.path.join(os.getcwd(), 'matmul_input.txt')
 	elif t['name'] == 'openmp_stress':
 	    input_pipe = ' < ' + os.path.join(os.getcwd(), 'stress.input')
+	elif t['name'] == 'lulesh' or t['name'] == 'lulesh203' :
+	    input_pipe = ' -i 30 '
 
 	string1 = \
         '#PBS -S /bin/csh\n\
@@ -282,7 +284,6 @@ def pbs_job_controller(env, tests):
 #PBS -q debug\n\
 \n\
 source $MODULESHOME/init/csh\n\
-setenv OPENSS_DEBUG_STARTUP 1\n\
 setenv OMP_NUM_THREADS 2\n'
 	
         if t['mpi_imp'] != '': #check if this an mpi test
