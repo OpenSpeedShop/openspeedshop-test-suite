@@ -84,9 +84,9 @@ def build_tests(env):
 	#TODO purge and load modules
 	module('purge')
 	for m in profile['other_modules']:
-	    module('load', m)
-	module('load', profile['cc_module'])
-	module('load', profile['mpi_module'])
+	    module('load', m.strip('ascii','ignore'))
+	module('load', profile['cc_module'].strip('ascii','ignore'))
+	module('load', profile['mpi_module'].strip('ascii','ignore'))
 	if profile['cmake_flag_var'][0] == '$': #treat as an environment variable
 	    profile_flags = [(profile['mpi_cmake_flag'],os.environ[profile['cmake_flag_var'][1:]])] #strip the $ sign
 	else: #treat as a path
@@ -375,10 +375,10 @@ def raw_job_controller(env, tests):
     
     for t in tests: #loop through all tests
 	module('purge')
-	module('load',env['openss_module'])
+	module('load',env['openss_module'].strip('ascii','ignore'))
         if t['mpi_imp'] != '': #check if this an mpi test
             print str(t)
-	    module('load',t['mpi_module'])
+	    module('load',t['mpi_module'].strip('ascii','ignore'))
             for c in t['collectors']: #loop through all collectors to run
                 #run each collector on the test program
                 #also build the mpirun command
@@ -427,7 +427,7 @@ def raw_job_controller(env, tests):
 def compare_tests(env, tests, args):
     '''compare the results of a list of tests, summarize'''
 
-    module('load',env['openss_module'])
+    module('load',env['openss_module'].strip('ascii','ignore'))
     base_dir = os.getcwd()
     try:
         os.chdir(env['test_data_dir'])
