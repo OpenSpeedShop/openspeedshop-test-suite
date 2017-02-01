@@ -111,6 +111,21 @@ def build_tests(env):
 ## that will generally need to be modified.
 ## env contains information about the system, and
 ## profiles contains the compiler/mpi schemes that will be used to compile the tests
+def find_modules(modules):
+	modules_home = os.environ['MODULEPATH']
+
+	my_modules = []
+	for root, dirs, files in os.walk(modules_home):
+   		for f in files:
+			ff = open(os.path.join(root,f))
+			module_src = ff.read()
+			for m in modules:
+				pattern = re.compile(r'.*set\s+' + re.escape(mpi) + r'.*', re.M|re.I)
+				if pattern.search(module_src):
+					my_modules.append(m)
+	return my_modules
+
+
 
 def create_env(filename):
     """create the default environment file"""
