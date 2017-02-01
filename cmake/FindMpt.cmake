@@ -34,7 +34,9 @@ find_path(Mpt_INCLUDE_DIR
 find_library(Mpt_LIBRARY_SHARED NAMES mpi
     HINTS $ENV{MPT_DIR}
     HINTS ${MPT_DIR}
-    PATH_SUFFIXES lib lib64
+    PATHS /usr/lib64/mpt /usr/lib/mpt
+    PATH_SUFFIXES lib lib64 lib/shared lib64/shared
+    NO_DEFAULT_PATH
     )
 
 find_library(MptPlusPlus_LIBRARY_SHARED NAMES mpi++

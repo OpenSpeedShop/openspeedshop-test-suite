@@ -119,7 +119,6 @@ def create_env(filename):
     print "please edit this to have correct values"
     env = {'bin_dir':'bin',
         'test_data_dir':'test_data',
-        'build_scripts_dir':'build_scripts',
         'src_dir':'src',
         'dynamic_cbtf':False,
         'oss_version': 'oss_offline-2.2.2',
