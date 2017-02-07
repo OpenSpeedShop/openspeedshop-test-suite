@@ -35,20 +35,22 @@ def mpi_root(mpi_module):
 	if mpi == 'mpich':
 		return ('-DMPICH_DIR', '$I_MPI_ROOT')
 	if mpi == 'openmpi':
-		print 'doing some sketchy stuff'
+		#print 'doing some sketchy stuff'
 		#openmpi dosent set a root variable so we need to figure that out manually
 		module('load', mpi_module)
 		path = os.environ['PATH']
-		paths = path.split[':']
+		paths = path.split(':')
 		for p in paths:
 			if re.match(r'.*open_?mpi.*', p, re.M|re.I):
 				mpi_root = os.path.split(p)[0]
-				print mpi_root
+				#print mpi_root
 		return ('-DOPENMPI_DIR', mpi_root)
 
 def module_kind(module):
+	if module == '':
+		return 'gnu'
 	if re.match(r'.*gcc.*', module, re.M|re.I):
-		return 'gcc'
+		return 'gnu'
 	if re.match(r'.*intel.*', module, re.M|re.I):
 		if re.match(r'.*mpi.*', module, re.M|re.I):
 			return 'mpich'
@@ -74,6 +76,13 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 	print "please look for any inconsistencies in this file"
 
 	compatability_set = [ #to be expanded
+		('mpt', 'intel'),
+		('mpich', 'intel'),
+		('openmpi', 'gnu'),
+		('mpt', 'gnu') ]
+
+
+	compatability_set3 = [ #to be expanded
 		('mpt', 'intel', 'math-intel'),
 		('mpich', 'intel', 'math-intel'),
 		('openmpi', 'gnu', 'math'),
@@ -83,8 +92,28 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 
 	for mpi_module in mpi_modules:
 		for cc_module in cc_modules:
-			for other_module in other_modules:
-				module_key = (module_kind(mpi_module), module_kind(cc_module), module_kind(other_module))
+			if other_modules and not othermodules.isEmpty():
+				for other_module in other_modules:
+					module_key = (module_kind(mpi_module), module_kind(cc_module), module_kind(other_module))
+					if not module_key in compatability_set3:
+						continue
+					else:
+						if module_kind(mpi_module) == 'mpt':
+							mpi_command = 'mpiexec_mpt -np 8'
+						else:
+							mpi_command = 'mpiexec -np 8'
+
+						prof = { "cc": module_kind(cc_module),
+								"mpi_imp": module_kind(mpi_module),
+								"cc_module": cc_module,
+								"mpi_module": mpi_module,
+								'mpi_driver': mpi_command,
+								"cmake_flag_var": mpi_root(mpi_module)[1],
+								"mpi_cmake_flag": mpi_root(mpi_module)[0],
+								"other_modules":[other_module]}
+						profiles.append(prof)
+			else:
+				module_key = (module_kind(mpi_module), module_kind(cc_module))
 				if not module_key in compatability_set:
 					continue
 				else:
@@ -94,13 +123,16 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 						mpi_command = 'mpiexec -np 8'
 
 					prof = { "cc": module_kind(cc_module),
-							"mpi_imp": module_kind(mpi_module),
-							"cc_module": cc_module,
-							"mpi_module": mpi_module,
-							'mpi_driver': mpi_command,
-							"cmake_flag_var": mpi_root(mpi_module),
-							"mpi_cmake_flag": "-DMPT_DIR",
-							"other_modules":["math/intel_mkl_default"]}
+						"mpi_imp": module_kind(mpi_module),
+						"cc_module": cc_module,
+						"mpi_module": mpi_module,
+						'mpi_driver': mpi_command,
+						"cmake_flag_var": mpi_root(mpi_module)[1],
+						"mpi_cmake_flag": mpi_root(mpi_module)[0],
+						"other_modules":[]}
+					profiles.append(prof)
+
+
 
 	pfile = open(filename,'w')
 	pfile.write(json.dumps(profiles,sort_keys=True, indent=2, separators=(',', ': ')))
@@ -129,17 +161,24 @@ def main(args=None, error_func=None):
 	if args.mpi_modules:
 		mpi_modules.extend(args.mpi_modules)
 	if args.mpi_module:
-		mpi_modules.append(args.mpi_modules)
+		mpi_modules.append(args.mpi_module)
 	if args.cc_modules:
 		cc_modules.extend(args.cc_modules)
 	if args.cc_module:
-		cc_modules.append(args.cc_modules)
+		cc_modules.append(args.cc_module)
 	if args.other_modules:
 		other_modules.extend(args.other_modules)
 
 	if args.mpi_modules:
 		print 'mpi modules are ' + str(args.mpi_modules)
 
+	print 'generating profiles.json base off the following modules'
+	print str(mpi_modules)
+	print str(cc_modules)
+	print str(other_modules)
+	
+	if cc_modules.isEmpty():
+		cc_modules.append('')
 	create_profiles('profiles.json', mpi_modules, cc_modules, other_modules)
 
 
@@ -152,3 +191,4 @@ def main(args=None, error_func=None):
 
 
 main()
+
