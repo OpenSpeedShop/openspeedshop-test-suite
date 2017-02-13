@@ -30,14 +30,20 @@ module = glo['module']
 
 def mpi_root(mpi_module):
 	mpi = module_kind(mpi_module)
+	module('purge')
+	module(['load', mpi_module])
+	#print str(glo)
 	if mpi == 'mpt':
 		return ('-DMPT_DIR', '$MPI_ROOT')
+	if mpi == 'mvapich2':
+		return ('-DMVAPICH2_DIR', '$MPIHOME')
 	if mpi == 'mpich':
 		return ('-DMPICH_DIR', '$I_MPI_ROOT')
 	if mpi == 'openmpi':
 		#print 'doing some sketchy stuff'
+		if 'MPIHOME' in os.environ:
+			return ('-DOPENMPI_DIR', '$MPIHOME')
 		#openmpi dosent set a root variable so we need to figure that out manually
-		module('load', mpi_module)
 		path = os.environ['PATH']
 		paths = path.split(':')
 		for p in paths:
@@ -51,6 +57,8 @@ def module_kind(module):
 		return 'gnu'
 	if re.match(r'.*gcc.*', module, re.M|re.I):
 		return 'gnu'
+	if re.match(r'.*pgi.*', module, re.M|re.I):
+		return 'pgi'
 	if re.match(r'.*intel.*', module, re.M|re.I):
 		if re.match(r'.*mpi.*', module, re.M|re.I):
 			return 'mpich'
@@ -61,10 +69,10 @@ def module_kind(module):
 		return 'mpt'
 	if re.match(r'.*open_?mpi.*', module, re.M|re.I):
 		return 'openmpi'
-	if re.match(r'.*mvapich.*', module, re.M|re.I):
-		return 'mvapich'
 	if re.match(r'.*mvapich2.*', module, re.M|re.I):
 		return 'mvapich2'
+	if re.match(r'.*mvapich.*', module, re.M|re.I):
+		return 'mvapich'
 	if re.match(r'.*math.*', module, re.M|re.I):
 		return 'math'
 	return ''
@@ -78,8 +86,14 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 	compatability_set = [ #to be expanded
 		('mpt', 'intel'),
 		('mpich', 'intel'),
+		('openmpi', 'intel'),
+		#('mvapich2', 'intel'),
 		('openmpi', 'gnu'),
-		('mpt', 'gnu') ]
+		('mpt', 'gnu'),
+		#('mvapich2', 'gnu'),
+		('mpt', 'pgi'),
+		('openmpi', 'pgi')]
+		#('mvapich2', 'pgi')]
 
 
 	compatability_set3 = [ #to be expanded
@@ -92,7 +106,7 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 
 	for mpi_module in mpi_modules:
 		for cc_module in cc_modules:
-			if other_modules and not othermodules.isEmpty():
+			if other_modules:
 				for other_module in other_modules:
 					module_key = (module_kind(mpi_module), module_kind(cc_module), module_kind(other_module))
 					if not module_key in compatability_set3:
@@ -177,8 +191,9 @@ def main(args=None, error_func=None):
 	print str(cc_modules)
 	print str(other_modules)
 	
-	if cc_modules.isEmpty():
+	if not cc_modules:
 		cc_modules.append('')
+		print ("no cc modules found, assuming gcc is in path (laptop mode)")
 	create_profiles('profiles.json', mpi_modules, cc_modules, other_modules)
 
 
