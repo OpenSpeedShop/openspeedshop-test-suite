@@ -31,7 +31,11 @@ module = glo['module']
 def mpi_root(mpi_module):
 	mpi = module_kind(mpi_module)
 	module('purge')
-	module(['load', mpi_module])
+	try:
+		module(['load', mpi_module])
+	except:
+		print "error! module not found: " + mpi_module
+		exit(1)
 	#print str(glo)
 	if mpi == 'mpt':
 		return ('-DMPT_DIR', '$MPI_ROOT')
@@ -106,6 +110,12 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 
 	for mpi_module in mpi_modules:
 		for cc_module in cc_modules:
+			try:
+				module('purge')
+				module(['load', cc_module])
+			except:
+				print "error! module not found: " + cc_module
+				exit(1)
 			if other_modules:
 				for other_module in other_modules:
 					module_key = (module_kind(mpi_module), module_kind(cc_module), module_kind(other_module))
@@ -162,7 +172,7 @@ def main(args=None, error_func=None):
 	parser.add_argument('--cc-modules', nargs='+', type=str,
 		help='array of compiler modules')
 	parser.add_argument('--cc-module', nargs='?', type=str,
-		help='single compiler module')
+		help='single compiler module. If none are provided we will assume gcc is in the path')
 	parser.add_argument('--other-modules', nargs='+', type=str,
 		help='array of other modules that may be needed by some profiles')
 
