@@ -42,18 +42,16 @@ def mpi_root(mpi_module):
 	if mpi == 'mvapich2':
 		return ('-DMVAPICH2_DIR', '$MPIHOME')
 	if mpi == 'mpich':
-		return ('-DMPICH_DIR', '$I_MPI_ROOT')
+		if 'I_MPI_ROOT' in os.environ:
+			return ('-DMPICH_DIR', '$I_MPI_ROOT')
+		mpi_root = path_from_regex(r'.*impi.*')
+		return ('-DMPICH_DIR', mpi_root)
 	if mpi == 'openmpi':
 		#print 'doing some sketchy stuff'
 		if 'MPIHOME' in os.environ:
 			return ('-DOPENMPI_DIR', '$MPIHOME')
 		#openmpi dosent set a root variable so we need to figure that out manually
-		path = os.environ['PATH']
-		paths = path.split(':')
-		for p in paths:
-			if re.match(r'.*open_?mpi.*', p, re.M|re.I):
-				mpi_root = os.path.split(p)[0]
-				#print mpi_root
+		mpi_root = path_from_regex(r'.*open_?mpi.*')
 		return ('-DOPENMPI_DIR', mpi_root)
 
 def module_kind(module):
@@ -80,6 +78,14 @@ def module_kind(module):
 	if re.match(r'.*math.*', module, re.M|re.I):
 		return 'math'
 	return ''
+
+def path_from_regex(matchstr):
+	path = os.environ['PATH']
+	paths = path.split(':')
+	for p in paths:
+		if re.match(matchstr, p, re.M|re.I):
+			return p
+	
 
 def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 	"""create the default profiles.json file"""
