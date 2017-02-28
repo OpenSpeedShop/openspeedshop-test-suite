@@ -94,6 +94,7 @@ def create_profiles(filename, mpi_modules, cc_modules, other_modules):
 		#('mvapich2', 'intel'),
 		('openmpi', 'gnu'),
 		('mpt', 'gnu'),
+		('mpich', 'gnu'),
 		#('mvapich2', 'gnu'),
 		('mpt', 'pgi'),
 		('openmpi', 'pgi')]
