@@ -51,12 +51,16 @@ The test suite is configured via two (2) files, the env.json and profiles.json. 
 the test suite looks for the files with these names in its install directory. you can manually 
 specify other files using the -p for profiles and -e for environment flags.
 
-Create the default environment file env.json with the commandj
+Create the default environment file env.json with the command
 
-./test-script.py --create-env
+./test-script.py --create-env --oss-module <your openspeedshop module>
+
+if you wish to build the tests with the intel compiler, also add the following arguments
+
+--ompt-root <path to ompt root>
 
 This will create a default environment file env.json populated with
-some defaults. Edit these to appropriate values before continuing.
+some defaults. check that these are set to appropriate values before continuing.
 
 The options are as follows:
     bin_dir             - Directory to store compiled tests in
@@ -72,17 +76,22 @@ The options are as follows:
     ompt_root           - Root directory of of ompt installation for libiomp, only used with intel compiler
     openss_module       - Location of the openss module file. this is required when using a job controller only.
 
-The following options will generally need to be modified before the first run:
-    mpi_drivers, oss_version, ompt_root(only if using ompt), openss_module 
-
 _______________________
 Create the profiles.json file. this contains information about how to build the tests on your system.
 
-./test-script.py --create-prof
+./test-script.py --create-prof <module options>
 
-The default settings are to build using the intel compiler with sgi/mpt mpi implementation. 
-These may need to be modified.
-This file is a list of build configurations. each configuration in a json object with the following properties
+the module options specify which modules will be used to build the tests. these are separated into 2
+categories; compilers (--cc-modules), and mpi implementations (--mpi-modules)
+
+if no --cc-modules are specified, the script will assume that gcc is in your path and attempt to build with that.
+
+mpi modules must be specified. here is an example showing how to configure with gcc, intel, openmpi, and intel-mpi
+
+
+./test-script.py --create-prof --cc-modules gcc intelcc --mpi-modules openmpi mpi-intel
+
+This file (default profiles.json) is a list of build configurations. each configuration in a json object with the following properties
     cc             - The compiler, options are intel, gnu, pgi
     mpi_imp        - The name of the mpi implementations, openmp, openmpi, mpt etc. this needs to match name in the binary files
     cc_module      - The module for the compiler
@@ -103,6 +112,8 @@ Build the tests with the command
 
 This will call the build scripts in build_scripts_dir specifed by the compilers 
 option in the env file
+
+if something fails here it likely that your env.json or profiles.json configuration files are incorrect.
 
 3)
 Create baselines for the various tests
