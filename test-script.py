@@ -247,14 +247,16 @@ def build_tests(env):
         #('-DOPENMPI_DIR', env['openmpi_root'])]
 
     for profile in env['profiles']:
-	#TODO purge and load modules
 	module('purge')
 	for m in profile['other_modules']:
 	    module('load', m.encode('ascii','ignore'))
+	profile_flags = []
 	module('load', profile['cc_module'].encode('ascii','ignore'))
 	module('load', profile['mpi_module'].encode('ascii','ignore'))
 	if profile['cmake_flag_var'][0] == '$': #treat as an environment variable
 	    profile_flags = [(profile['mpi_cmake_flag'],os.environ[profile['cmake_flag_var'][1:]])] #strip the $ sign
+	if profile['mpi_imp'] == 'mpt':
+		profile_flags.append(('-DMPT_BUILD','1'))
 	else: #treat as a path
 	    profile_flags = [(profile['mpi_cmake_flag'],profile['cmake_flag_var'])]
 	if 'intel' == profile['cc']:
