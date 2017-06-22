@@ -403,6 +403,7 @@ def run_tests(env, tests, is_baseline):
     env['input_dir'] = os.path.join(base_dir, env['input_dir'])
     for f in ['input', 'matmul_input.txt', 'stress.input']:
         input_file = os.path.join(env['input_dir'], f)
+        print 'copying input files to: ' + os.getcwd()
         shutil.copyfile(input_file, os.path.join(os.getcwd(), f))
 
     job_cont = env['job_controller']
@@ -564,35 +565,84 @@ def raw_job_controller(env, tests):
     os.environ['OMP_NUM_THREADS'] = '2'
     
     for t in tests: #loop through all tests
+	#print 'raw_job_controller, TOP of LOOP, DEBUG (MPI), mpi_imp is: ' + t['mpi_imp']
+	#print 'raw_job_controller, TOP of LOOP, DEBUG (MPI), tname is: ' + t['name']
+
 	module('purge')
 	module('load',env['openss_module'].encode('ascii','ignore'))
+
+	#print 'raw_job_controller, DEBUG (MPI), mpi_imp is: ' + t['mpi_imp']
+	#print 'raw_job_controller, DEBUG (MPI), tname is: ' + t['name']
+
         if t['mpi_imp'] != '': #check if this an mpi test
-            print str(t)
+	    print str(t)
+	    #print 'raw_job_controller, DEBUG (MPI), tname is: ' + t['name']
 	    module('load',t['mpi_module'].encode('ascii','ignore'))
-            for c in t['collectors']: #loop through all collectors to run
-                #run each collector on the test program
-                #also build the mpirun command
-                cmd = ['oss' + c, t['mpi_driver'] + ' ' + t['exe']]
-                print base_dir
-                print cmd[0] + ' ' + cmd[1]
-                p = Popen(cmd)
-                p.wait() #wait for subprocess to finish
-                db_name = get_db_name(cmd) #get the name of the output file
-                #OPTIONAL os.rm(input_file)
-                if p.returncode != 0:
-                    print 'failed to run test ' + c + ' ' + t['exe']
-                    failed.append(c + ", " + t['exe'])
-                try: os.rm(db_name)
-                except: pass
+
+	    # Initialize the input parameter argument to null and unset the pcontrol variable (set only for one test)
+	    input_pipe = ''
+	    for key in os.environ.keys():
+		if key.lower().startswith('OPENSS_ENABLE_MPI_PCONTROL'):
+	            del os.environ['OPENSS_ENABLE_MPI_PCONTROL']
+
+	    if t['name'] == 'lulesh' or t['name'] == 'lulesh203' :
+	        input_pipe = ' -i 30 '
+            elif t['name'] == 'sweep3d': #need to move input file
+                input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
+            elif t['name'] == 'nbodyPcontrol': #need to set pcontrol env variable
+		os.environ['OPENSS_ENABLE_MPI_PCONTROL'] = '1'
+
+            skip_this_test = 0
+	    #print 'raw_job_controller, DEBUG (MPI), tname is: ' + t['name']
+	    #print 'raw_job_controller, DEBUG (MPI), tmpi_driver is: ' + t['mpi_driver']
+	    #if '8' in t['mpi_driver']:
+	    #    print 'raw_job_controller, DEBUG (MPI), 8 in tmpi_driver is True'
+	    #else:
+	    #    print 'raw_job_controller, DEBUG (MPI), 8 in tmpi_driver is False'
+
+	    if t['name'] == 'lulesh203' and not '8' in t['mpi_driver']:
+                skip_this_test = 1
+	    elif t['name'] == 'nbodyPcontrol':
+		# we have a bug that will stop the tests from running.  Take out when FIXED
+                skip_this_test = 1
+           
+            if skip_this_test == 0:
+                for c in t['collectors']: #loop through all collectors to run
+                    #run each collector on the test program
+                    #also build the mpirun command
+                    cmd = ['oss' + c, t['mpi_driver'] + ' ' + t['exe'] + input_pipe ]
+                    print base_dir
+                    print cmd[0] + ' ' + cmd[1]
+                    p = Popen(cmd)
+                    p.wait() #wait for subprocess to finish
+                    db_name = get_db_name(cmd) #get the name of the output file
+                    #OPTIONAL os.rm(input_file)
+                    if p.returncode != 0:
+                        print 'failed to run test ' + c + ' ' + t['exe']
+                        failed.append(c + ", " + t['exe'])
+                    try: os.rm(db_name)
+                    except: pass
             
         else: #not an mpi test, just run once normally
-            if t['name'] == 'sweep3d': #need to move input file
+	    input_pipe = ''
+    	    #print 'raw_job_controller, DEBUG (not MPI), tname is: ' + t['name']
+	    if t['name'] == 'matmul':
+	        input_pipe = ' < ' + os.path.join(os.getcwd(), 'matmul_input.txt')
+	    elif t['name'] == 'openmp_stress':
+	        input_pipe = ' < ' + os.path.join(os.getcwd(), 'stress.input')
+    	        #print 'raw_job_controller, DEBUG (not MPI), input_pipe is: ' + input_pipe
+	    elif t['name'] == 'lulesh' or t['name'] == 'lulesh203' :
+	        input_pipe = ' -i 30 '
+            elif t['name'] == 'sweep3d': #need to move input file
                 input_file = os.path.join(os.path.join(env['install_dir'], env['src_dir']), 'sweep3d/input')
                 shutil.copyfile(input_file, os.path.join(os.getcwd(),'input'))
 
             for c in t['collectors']: #loop through all collectors to run
                 #run each collector on the test program
-                cmd = ['oss' + c, t['exe']]
+                if input_pipe != '':
+                    cmd = ['oss' + c, t['exe'] + input_pipe ]
+                else:
+                    cmd = ['oss' + c, t['exe']]
                 print base_dir
                 print cmd[0] + ' ' + cmd[1]
                 p = Popen(cmd)
@@ -604,6 +654,7 @@ def raw_job_controller(env, tests):
                 failed.append(c + ", " + t['exe'])
             try: os.rm(db_name)
             except: pass
+	#print 'raw_job_controller, FOR LOOP END DEBUG (MPI), mpi_imp is: ' + t['mpi_imp']
                             
     if len(failed) > 0:
             print "failed to run tests:"
@@ -678,6 +729,9 @@ def compare_tests(env, tests, args):
 		continue
             shutil.copyfile('../' + baseline_file, './baseline')
             shutil.copyfile('../' + results_file, './results')
+
+            print 'Comparing baseline file: ' + str(baseline_file)
+            print 'To the new results file: ' + str(results_file)
 
             cmd = 'osscompare \"baseline,results\" ' + compare_metric
             #print str(cmd)
