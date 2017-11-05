@@ -1,0 +1,12 @@
+[
+  {
+    "cc": "gnu",
+    "cc_module": "",
+    "cmake_flag_var": "/opt/openmpi-1.8.2",
+    "mpi_cmake_flag": "-DOPENMPI_DIR",
+    "mpi_driver": "mpiexec -np 4",
+    "mpi_imp": "openmpi",
+    "mpi_module": "openmpi-1.8.2",
+    "other_modules": []
+  }
+]
