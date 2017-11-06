@@ -42,12 +42,14 @@ def test_obj(env, file_name):
 	    test['mpi_driver'] = p['mpi_driver']
     test['compiler'] = lst[-1]
     #determine appropriate collectors, according to the old test-tool.sh
-    coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime']
+    coll = ['hwc', 'hwctime', 'hwcsamp', 'pcsamp', 'usertime', 'io', 'iot']
     if test['mpi_imp'] != '':
         coll.extend(['mpi', 'mpit'])
     ##
     if env['dynamic_cbtf']:
         coll.append('mem')
+        #coll.append('ompt')
+        coll.append('iop')
         if test['mpi_imp'] != '':
             coll.append('mpip')
     test['collectors'] = coll
@@ -489,6 +491,7 @@ setenv OMP_NUM_THREADS 2\n'
             jobscript = string1 + \
 'setenv OPENSS_MPI_IMPLEMENTATION ' + t['mpi_imp'] + '\n\
 module load modules ' + env['openss_module'] + '\n\
+module load modules ' + t['cc_module'] + '\n\
 module load modules ' + t['mpi_module'] + '\n\
 echo "showing environment for debugging purposes"\n\
 echo " =========================="\n\
@@ -570,6 +573,8 @@ def raw_job_controller(env, tests):
 
 	module('purge')
 	module('load',env['openss_module'].encode('ascii','ignore'))
+        for profile in env['profiles']:
+	    module('load', profile['cc_module'].encode('ascii','ignore'))
 
 	#print 'raw_job_controller, DEBUG (MPI), mpi_imp is: ' + t['mpi_imp']
 	#print 'raw_job_controller, DEBUG (MPI), tname is: ' + t['name']
@@ -716,7 +721,7 @@ def compare_tests(env, tests, args):
             compare_metric = 'percent'
             if c in ['mem', 'mpi', 'io', 'iot', 'pthreads', 'mpit']:
                 compare_metric = 'counts'
-            elif c == 'hwsamp':
+            elif c == 'hwcsamp':
                 compare_metric = 'allEvents'
 
             #move results and baseline files to a temp dir
@@ -878,7 +883,7 @@ def main(args=None, error_func=None):
 
     # Search for these paths within the MODULESHOME directory (in this order)
     search_paths = ['init/python',
-	'init/python.py',]
+	'init/python.py', 'init/env_modules_python.py',]
 
     # Stop at first path that exists
     for sp in search_paths:
