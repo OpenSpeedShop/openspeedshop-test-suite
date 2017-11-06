@@ -1,0 +1,12 @@
+[
+  {
+    "cc": "gnu",
+    "cc_module": "gcc/4.9.3",
+    "cmake_flag_var": "/usr/tce/packages/mvapich2/mvapich2-2.2-intel-16.0.3",
+    "mpi_cmake_flag": "-DMVAPICH2_DIR",
+    "mpi_driver": "/usr/bin/srun -n 8",
+    "mpi_imp": "mvapich2",
+    "mpi_module": "mvapich2/2.2",
+    "other_modules": []
+  }
+]
