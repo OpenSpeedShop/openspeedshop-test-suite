@@ -1,0 +1,64 @@
+export OMP_NUM_THREADS=4
+
+# OpenMP Profiling experiment (omptp)
+echo "Running ossomptp ./matmul"
+ossomptp "./matmul"
+
+openss -cli -f <db name>
+
+# This expstatus shows the information about the experiment, host, rank/thread/id, type, etc
+expstatus
+
+# This expview is showing the aggregated time in each parallel region
+  for all threads (across all ranks if this was hybrid mpi,openmp).
+  The IDLE,BARRIER,WAIT_BARRIER times here are aggregated as well.  These are symbols
+  we create to we can express what is happening.  Without ompt, a sample experiment like
+  osspcsamp would show these as some internal gomp or libiomp call (eg __kmp_wait).
+
+expview
+
+# This shows the actual statements.  The caveat here is that with statements, we no longer see
+  the meaning of the collector.c lines where we annotate the idle,barrier,wait_barrier times.
+
+expview -v statements
+
+# This command will show each of the 4 threads for the metric time.
+
+expcompare -mtime -t0:4
+
+# The compare also works for -v statements.
+
+expcompare -mtime -t0:4 -vstatements
+#
+# The ! character lets you escape out of the CLI and run a shell command
+# on the system you are on.  So, the sed syntax below will allow you to
+# see source lines if your source file is available.
+#
+!sed -n <linenum>p matmul.c 
+!sed -n <linenum1>,<linenum2>p matmul.c 
+# for this example, try these
+!sed -n 68p matmul.c
+!sed -n 67,69p matmul.c
+
+# This shows the callpaths to the regions and associates to each region its
+  contribution (if any) to IDLE,BARRIER,WAIT_BARRIER).
+
+expview -v calltrees -mtime
+
+# For any parallel regions in the function "compute" as an aggregate. (add -t2 to see just
+  thread 2).  In mpi hybrid, add -r rank -t omptid to select one thread from one ranks
+  or just -r rank to see the aggregated threads for one rank.
+
+expview -v calltrees -mtime -f compute
+
+
+# The -v Fullstack option will give a more detailed callpatch complete with line numbers if
+  the code is compiled -g.
+
+expview -vfullstack -mtime -f compute
+
+# see only the values for a single thread (-t n) or rank (-r n) or process (-p n)
+expview -t 0
+expview -t 2
+or a range:
+expview -t2:4
