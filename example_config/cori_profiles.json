@@ -1,0 +1,12 @@
+[
+  {
+    "cc": "intel",
+    "cc_module": "intel/18.0.0.128",
+    "cmake_flag_var": "/opt/cray/pe/mpt/7.6.0/gni/mpich-intel/16.0",
+    "mpi_cmake_flag": "-DMPICH_DIR",
+    "mpi_driver": "/usr/bin/srun -n 8",
+    "mpi_imp": "mpich",
+    "mpi_module": "cray-mpich/7.6.0",
+    "other_modules": []
+  }
+]

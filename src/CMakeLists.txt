@@ -22,8 +22,10 @@ add_subdirectory(loopcheck)
 add_subdirectory(threads)
 # openmp only
 add_subdirectory(openmp_stress)
+#add_subdirectory(openmp_poisson)
 # mpi only
 add_subdirectory(nbody)
+add_subdirectory(nbodyPcontrol)
 add_subdirectory(sweep3d)
 add_subdirectory(mpi_wave)
 add_subdirectory(IOR)

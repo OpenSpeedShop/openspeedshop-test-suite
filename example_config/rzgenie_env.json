@@ -1,0 +1,14 @@
+{
+  "acceptable_variance": 10.0,
+  "bin_dir": "bin",
+  "build_scripts_dir": "build_scripts",
+  "dynamic_cbtf": true,
+  "input_dir": "input_files",
+  "job_controller": "raw",
+  "max_concurrent_jobs": 25,
+  "ompt_root": "",
+  "openss_module": "openspeedshop.rzgenie.explicit",
+  "oss_version": "openspeedshop.rzgenie.explicit",
+  "src_dir": "src",
+  "test_data_dir": "test_data"
+}

@@ -28,14 +28,15 @@ find_path(OpenMPI_INCLUDE_DIR
     NAMES mpi.h
     HINTS $ENV{OPENMPI_DIR}
     HINTS ${OPENMPI_DIR}
-    PATH_SUFFIXES include include/openmpi
+    PATH_SUFFIXES include include/openmpi include/openmpi-${oss_hardware_platform}
     )
 
 find_library(OpenMPI_LIBRARY_SHARED NAMES mpi
     HINTS $ENV{OPENMPI_DIR}
     HINTS ${OPENMPI_DIR}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib lib64 lib/openmpi lib64/openmpi
     )
+message(STATUS "OpenMPI Finding: OpenMPI_LIBRARY_SHARED: " ${OpenMPI_LIBRARY_SHARED})
 
 find_library(OpenMPI_CXX_LIBRARY_SHARED NAMES mpi_cxx
     HINTS $ENV{OPENMPI_DIR}
@@ -75,13 +76,18 @@ set(OpenMPI_DEFINES "")
 GET_FILENAME_COMPONENT(OpenMPI_LIB_DIR ${OpenMPI_LIBRARY_SHARED} PATH )
 GET_FILENAME_COMPONENT(OpenMPI_DIR ${OpenMPI_INCLUDE_DIR} PATH )
 message(STATUS "OpenMPI OPENMPI_DIR: " ${OPENMPI_DIR})
+message(STATUS "OpenMPI OpenMPI_SHARED_LIBRARY: " ${OpenMPI_SHARED_LIBRARY})
 message(STATUS "OpenMPI OpenMPI_SHARED_LIBRARIES: " ${OpenMPI_SHARED_LIBRARIES})
 message(STATUS "OpenMPI OpenMPI_INCLUDE_DIR: " ${OpenMPI_INCLUDE_DIR})
 message(STATUS "OpenMPI OpenMPI_LIB_DIR: " ${OpenMPI_LIB_DIR})
 message(STATUS "OpenMPI found: " ${OPENMPI_FOUND})
 message(STATUS "OpenMPI location: " ${OpenMPI_LIB_DIR})
 
-set(OpenMPI_DEFINES "HAVE_OPENMPI=${OPENMPI_FOUND}")
+if (OPENMPI_FOUND)
+    set(OpenMPI_DEFINES "HAVE_OPENMPI=1")
+else()
+    set(OpenMPI_DEFINES "")
+endif()
 
 
 mark_as_advanced(

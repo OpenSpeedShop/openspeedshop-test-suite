@@ -4,7 +4,7 @@ rm -rf build_gnu_application_tests
 mkdir -p build_gnu_application_tests
 pushd build_gnu_application_tests
 
-export OPENMPI_ROOT=/opt/openmpi-1.10.2
+export OPENMPI_ROOT=/opt/openmpi-1.8.2
 cmake .. \
        -DCMAKE_INSTALL_PREFIX=.. \
        -DCMAKE_BUILD_TYPE=None \
