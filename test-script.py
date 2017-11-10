@@ -206,6 +206,7 @@ def run_tests(env, tests, is_baseline):
     else:
         mk_cd('results')
     folder = str(datetime.now())
+    folder = folder.replace(':','-')
     folder = folder.split()[0] + '_' + folder.split()[1]
     mk_cd(folder)
 
@@ -247,12 +248,23 @@ def pbs_job_controller(env, tests):
 	#dir and run the test there. then have the pbs script move its files to the dest dir
 	#and clean up after itself.
 	base_dir = os.getcwd()
-	run_dir = t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler']
+
+        if t['compiler'] == '': 
+            if t['mpi_imp'] == '': 
+	        run_dir = 'rundir_' + t['name'] + '-' + t['mpi_imp']
+            else:
+	        run_dir = 'rundir_' + t['name'] + '-' + t['mpi_imp']
+        else:
+            if t['mpi_imp'] == '': 
+	        run_dir = 'rundir_' + t['name'] + '-' + t['compiler']
+            else:
+	        run_dir = 'rundir_' + t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler']
+
 	stdoutfile = os.path.join(base_dir,run_dir + 'stdout.txt')
 	stderrfile = os.path.join(base_dir,run_dir + 'stderr.txt')
 	mk_cd(run_dir)
 	cleanup_line = 'mv '+ base_dir + '/' + run_dir + '/* ' + str(base_dir) #bash code to save files and cleanup
-	cleanup_line += '\n' + 'rm -rf ' + os.path.join(base_dir,str(run_dir)) + '\n'
+	#cleanup_line += '\n' + 'rm -rf ' + os.path.join(base_dir,str(run_dir)) + '\n'
 
 	#copy input files. will be ignored if not necesarry
         for f in ['input', 'matmul_input.txt', 'stress.input']:
@@ -276,7 +288,7 @@ def pbs_job_controller(env, tests):
 \n\
 #PBS -l select=2:ncpus=16:model=has\n\
 #PBS -N test-suite-' + t['name'] + '-' + t['mpi_imp'] + '-' + t['compiler'] + '\n' + \
-'#PBS -l walltime=1:00:00\n\
+'#PBS -l walltime=0:30:00\n\
 #PBS -j oe\n\
 #PBS -o ' + stdoutfile + '\n\
 #PBS -e ' + stderrfile + '\n\
