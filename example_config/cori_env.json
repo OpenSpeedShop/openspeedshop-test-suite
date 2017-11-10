@@ -1,0 +1,14 @@
+{
+  "acceptable_variance": 10.0,
+  "bin_dir": "bin",
+  "build_scripts_dir": "build_scripts",
+  "dynamic_cbtf": true,
+  "input_dir": "input_files",
+  "job_controller": "slurm",
+  "max_concurrent_jobs": 25,
+  "ompt_root": "/project/projectdirs/m888/jgalaro/openss/cori//krellroot_v2.3.1.release/ompt",
+  "openss_module": "/global/homes/j/jgalaro/privatemodules/cori-openspeedshop231.rel",
+  "oss_version": "/global/homes/j/jgalaro/privatemodules/cori-openspeedshop231.rel",
+  "src_dir": "src",
+  "test_data_dir": "test_data"
+}
