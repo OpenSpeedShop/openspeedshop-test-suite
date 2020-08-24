@@ -11,3 +11,6 @@ intel:
 
 clean:
 	rm -f nbody nbody-intel nbody-gnu
+
+veryclean:
+	rm -rf nbody-survey-csvdata-* nbody*.openss cbtfAutoTopology
