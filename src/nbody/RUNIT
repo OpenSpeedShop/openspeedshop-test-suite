@@ -1,0 +1,7 @@
+module use <spack module location>
+module load survey<*>
+
+# run outside of survey
+mpirun -np 8 ./nbody
+# run with survey
+survey "mpirun -np 8 ./nbody"
